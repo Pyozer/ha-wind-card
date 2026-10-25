@@ -151,7 +151,8 @@ function hass(): HomeAssistant {
     language,
     locale: { language },
     themes: { darkMode: dark },
-    config: { unit_system: { wind_speed: 'km/h' } },
+    // A metric Home Assistant reports m/s: `unit: auto` must follow the unit of the entities (km/h) instead.
+    config: { unit_system: { wind_speed: 'm/s' } },
     callWS: callWS as HomeAssistant['callWS'],
   };
 }

@@ -7,6 +7,7 @@ import {
   BEAUFORT_LIMITS,
   cardinalLetters,
   convertSpeed,
+  displayUnitOf,
   formatAge,
   formatNumber,
   formatSpeed,
@@ -119,6 +120,19 @@ describe('speed units', () => {
     expect(kmhPerUnit('ft/s')).toBeCloseTo(1.09728);
     expect(kmhPerUnit('furlongs per fortnight')).toBeUndefined();
     expect(kmhPerUnit(undefined)).toBeUndefined();
+  });
+
+  it('finds the display unit that matches a unit written by Home Assistant', () => {
+    expect(displayUnitOf('km/h')).toBe('kmh');
+    expect(displayUnitOf(' KPH ')).toBe('kmh');
+    expect(displayUnitOf('m/s')).toBe('ms');
+    expect(displayUnitOf('mph')).toBe('mph');
+    expect(displayUnitOf('kn')).toBe('kn');
+    expect(displayUnitOf('Bft')).toBe('bft');
+    expect(displayUnitOf('beaufort')).toBe('bft');
+    expect(displayUnitOf('ft/s')).toBeUndefined();
+    expect(displayUnitOf('furlongs')).toBeUndefined();
+    expect(displayUnitOf(undefined)).toBeUndefined();
   });
 
   it('follows the unit system of Home Assistant', () => {

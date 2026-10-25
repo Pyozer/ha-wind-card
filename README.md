@@ -30,8 +30,9 @@ neutral surfaces, with color reserved for the wind itself. The color follows the
 - **One weather entity is enough**: speed, gusts and direction are read from its attributes. Any
   of the three can be replaced by a dedicated entity (a personal weather station, for instance),
   from its state or from an attribute.
-- **Units**: km/h, m/s, knots, mph or Beaufort force, following the Home Assistant unit system by
-  default. Entities are converted whatever unit they use (km/h, m/s, mph, kn, ft/s, Bft).
+- **Units**: km/h, m/s, knots, mph or Beaufort force. By default the card shows the unit of your
+  speed entity (km/h stays km/h), and falls back on the Home Assistant unit system when the entity
+  has no unit it can display. Entities are converted whatever unit they use (km/h, m/s, mph, kn, ft/s, Bft).
 - **Direction** read as degrees or compass letters (`WSW`, `OSO`…), shown with `N E S O` or
   `N E S W` letters, with an arrow that shows where the wind blows to or where it comes from.
 - `unavailable` / `unknown` entities are reported cleanly: never `NaN`.
@@ -91,7 +92,7 @@ out; without a direction, the pointer and the arrows are hidden.
 | `name` | `Wind` | Title. |
 | `subtitle` | | Text under the title, such as a place. |
 | `layout` | `full` | `full`, or `compact` (one line). |
-| `unit` | `auto` | `auto` (Home Assistant unit system), `kmh`, `ms`, `kn`, `mph` or `bft`. |
+| `unit` | `auto` | `auto` (the unit of the speed entity), `kmh`, `ms`, `kn`, `mph` or `bft`. |
 | `arrow` | `to` | `to`: the arrow shows where the wind blows to. `from`: where it comes from. |
 | `compass_letters` | `auto` | `auto` (follows the language), `NESO` (French, Spanish, Italian, Portuguese) or `NESW`. |
 | `colors` | `beaufort` | `beaufort` (color of the force) or `accent` (the theme's primary color). |

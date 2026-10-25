@@ -103,7 +103,7 @@ export const en = {
     },
     option: {
       unit: {
-        auto: 'Automatic (Home Assistant unit system)',
+        auto: 'Automatic (the unit of the entity)',
         kmh: 'km/h',
         ms: 'm/s',
         kn: 'Knots',

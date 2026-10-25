@@ -173,14 +173,24 @@ export function kmhPerUnit(unit: string | undefined): number | undefined {
   return HA_UNITS[unit.trim().toLowerCase()];
 }
 
-/** The display unit of Home Assistant's unit system (`auto`), km/h when it does not say. */
-export function systemUnit(wind: string | undefined): SpeedUnit {
-  const factor = kmhPerUnit(wind);
-  if (factor === undefined) return 'kmh';
+/**
+ * The display unit that matches a unit written by Home Assistant (`km/h`, `m/s`, `Bft`…), or
+ * `undefined` when none does (`ft/s`, an unknown unit).
+ */
+export function displayUnitOf(unit: string | undefined): SpeedUnit | undefined {
+  const name = unit?.trim().toLowerCase();
+  if (name === 'bft' || name === 'beaufort') return 'bft';
+  const factor = kmhPerUnit(unit);
+  if (factor === 1) return 'kmh';
   if (factor === 3.6) return 'ms';
   if (factor === 1.609344) return 'mph';
   if (factor === 1.852) return 'kn';
-  return 'kmh';
+  return undefined;
+}
+
+/** The speed unit of the Home Assistant unit system, km/h when it does not say. */
+export function systemUnit(wind: string | undefined): SpeedUnit {
+  return displayUnitOf(wind) ?? 'kmh';
 }
 
 export function unitLabel(unit: SpeedUnit): string {

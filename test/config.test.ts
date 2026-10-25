@@ -69,7 +69,7 @@ describe('watchedEntities', () => {
 
 describe('resolveSettings', () => {
   it('applies the defaults', () => {
-    expect(resolveSettings({ type: 'x' }, undefined, 'en')).toEqual({
+    expect(resolveSettings({ type: 'x' }, 'en')).toEqual({
       unit: 'kmh',
       arrow: 'to',
       letters: 'NESW',
@@ -88,21 +88,37 @@ describe('resolveSettings', () => {
     expect(DEFAULTS.max_speed).toBe(100);
   });
 
-  it('follows the unit system of Home Assistant on `auto`, or the choice made', () => {
-    expect(resolveSettings({ type: 'x' }, 'mph', 'en').unit).toBe('mph');
-    expect(resolveSettings({ type: 'x', unit: 'auto' }, 'm/s', 'en').unit).toBe('ms');
-    expect(resolveSettings({ type: 'x', unit: 'kn' }, 'mph', 'en').unit).toBe('kn');
+  it('follows the unit of the speed entity on `auto`', () => {
+    expect(resolveSettings({ type: 'x' }, 'en', { entity: 'km/h', system: 'm/s' }).unit).toBe('kmh');
+    expect(resolveSettings({ type: 'x', unit: 'auto' }, 'en', { entity: 'mph' }).unit).toBe('mph');
+    expect(resolveSettings({ type: 'x' }, 'en', { entity: 'kn' }).unit).toBe('kn');
+    expect(resolveSettings({ type: 'x' }, 'en', { entity: 'Bft' }).unit).toBe('bft');
+  });
+
+  it('falls back on the unit system when the entity has no unit we can display', () => {
+    expect(resolveSettings({ type: 'x' }, 'en', { system: 'mph' }).unit).toBe('mph');
+    expect(resolveSettings({ type: 'x' }, 'en', { entity: 'ft/s', system: 'm/s' }).unit).toBe('ms');
+    expect(resolveSettings({ type: 'x' }, 'en', { entity: 'furlongs', system: 'm/s' }).unit).toBe('ms');
+    expect(resolveSettings({ type: 'x' }, 'en', {}).unit).toBe('kmh');
+    expect(resolveSettings({ type: 'x' }, 'en').unit).toBe('kmh');
+  });
+
+  it('keeps the unit that was chosen, whatever the entity says', () => {
+    expect(resolveSettings({ type: 'x', unit: 'kn' }, 'en', { entity: 'km/h', system: 'mph' }).unit).toBe(
+      'kn',
+    );
+    expect(resolveSettings({ type: 'x', unit: 'ms' }, 'en', { entity: 'km/h' }).unit).toBe('ms');
   });
 
   it('writes the west with an O in the languages that do, on `auto`', () => {
     for (const language of ['fr', 'fr-FR', 'es', 'it', 'pt-BR']) {
-      expect(resolveSettings({ type: 'x' }, undefined, language).letters).toBe('NESO');
+      expect(resolveSettings({ type: 'x' }, language).letters).toBe('NESO');
     }
     for (const language of ['en', 'en-GB', 'de', 'nl']) {
-      expect(resolveSettings({ type: 'x' }, undefined, language).letters).toBe('NESW');
+      expect(resolveSettings({ type: 'x' }, language).letters).toBe('NESW');
     }
-    expect(resolveSettings({ type: 'x', compass_letters: 'NESW' }, undefined, 'fr').letters).toBe('NESW');
-    expect(resolveSettings({ type: 'x', compass_letters: 'NESO' }, undefined, 'en').letters).toBe('NESO');
+    expect(resolveSettings({ type: 'x', compass_letters: 'NESW' }, 'fr').letters).toBe('NESW');
+    expect(resolveSettings({ type: 'x', compass_letters: 'NESO' }, 'en').letters).toBe('NESO');
   });
 
   it('keeps the options set, including the ones that turn something off', () => {
@@ -117,7 +133,6 @@ describe('resolveSettings', () => {
         arrow: 'from',
         colors: 'accent',
       },
-      undefined,
       'en',
     );
     expect(s).toMatchObject({

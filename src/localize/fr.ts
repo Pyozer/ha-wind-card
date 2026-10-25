@@ -105,7 +105,7 @@ export const fr: Strings = {
     },
     option: {
       unit: {
-        auto: 'Automatique (système d’unités de Home Assistant)',
+        auto: 'Automatique (l’unité de l’entité)',
         kmh: 'km/h',
         ms: 'm/s',
         kn: 'Nœuds',

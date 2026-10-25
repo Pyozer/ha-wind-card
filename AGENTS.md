@@ -169,3 +169,6 @@ Conventional Commits, in English, concise, no `Co-authored-by`. Details in
   columns (`--tiles`), otherwise an empty cell is left.
 - **Gusts are never below the speed**: `readWind` and `buildSeries` both lift them, a sensor
   update order can otherwise show a gust under the average.
+- **`unit: auto` follows the entity, not the unit system.** A metric Home Assistant reports `m/s` as its
+  wind speed unit, whatever the unit of the entities: the card reads the unit of the speed entity
+  first (`displayUnitOf`), and only falls back on the unit system when it has none it can display.

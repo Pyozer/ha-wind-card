@@ -8,7 +8,7 @@ import type {
   LiveWindCardConfig,
   SpeedUnit,
 } from './types';
-import { systemUnit } from './wind';
+import { displayUnitOf, systemUnit } from './wind';
 
 /** Default value of every option of the card. */
 export const DEFAULTS = {
@@ -138,19 +138,27 @@ export interface Settings {
 /** Languages that write the west `O` (Ouest, Oeste, Ovest). */
 const WEST_IS_O = new Set(['fr', 'es', 'it', 'pt']);
 
+/** Units `auto` can follow, as Home Assistant spells them. */
+export interface KnownUnits {
+  /** Unit of the speed entity: the first choice. */
+  entity?: string;
+  /** Unit of the Home Assistant unit system (`hass.config.unit_system.wind_speed`): the fallback. */
+  system?: string;
+}
+
 /**
- * @param systemWind unit of the Home Assistant unit system (`hass.config.unit_system.wind_speed`)
  * @param language language of the card, already resolved
+ * @param units what `auto` follows: the unit of the speed entity, then the unit system
  */
 export function resolveSettings(
   config: LiveWindCardConfig,
-  systemWind: string | undefined,
   language: string,
+  units: KnownUnits = {},
 ): Settings {
   const unit = config.unit ?? DEFAULTS.unit;
   const letters = config.compass_letters ?? DEFAULTS.compass_letters;
   return {
-    unit: unit === 'auto' ? systemUnit(systemWind) : unit,
+    unit: unit === 'auto' ? (displayUnitOf(units.entity) ?? systemUnit(units.system)) : unit,
     arrow: config.arrow ?? DEFAULTS.arrow,
     letters:
       letters === 'auto' ? (WEST_IS_O.has(language.split('-')[0].toLowerCase()) ? 'NESO' : 'NESW') : letters,

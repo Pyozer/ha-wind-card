@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   readBearing,
+  readSpeedUnit,
   readSpeed,
   readWind,
   resolveSources,
@@ -173,5 +174,20 @@ describe('readWind', () => {
     expect(readBearing(s, { entity: 'weather.home', attribute: 'wind_bearing' })).toBeNull();
     expect(readSpeed(s, undefined)).toBeNull();
     expect(readBearing(s, undefined)).toBeNull();
+  });
+});
+
+describe('readSpeedUnit', () => {
+  it('reads the unit of a sensor and of a weather entity', () => {
+    const s = states(
+      entity('sensor.wind', '10', { unit_of_measurement: 'km/h' }),
+      WEATHER,
+      entity('sensor.bare', '3'),
+    );
+    expect(readSpeedUnit(s, { entity: 'sensor.wind' })).toBe('km/h');
+    expect(readSpeedUnit(s, { entity: 'weather.home', attribute: 'wind_speed' })).toBe('km/h');
+    expect(readSpeedUnit(s, { entity: 'sensor.bare' })).toBeUndefined();
+    expect(readSpeedUnit(s, { entity: 'sensor.missing' })).toBeUndefined();
+    expect(readSpeedUnit(s, undefined)).toBeUndefined();
   });
 });

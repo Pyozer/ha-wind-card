@@ -18,7 +18,7 @@ const reading = (over: Partial<WindReading> = {}): WindReading => ({
 const view = (r: WindReading, config: Partial<LiveWindCardConfig> = {}, language = 'en', configured = true) =>
   buildView({
     reading: r,
-    settings: resolveSettings({ type: 'x', ...config }, undefined, language),
+    settings: resolveSettings({ type: 'x', ...config }, language),
     language,
     t: t(language),
     peak: { speed: 40, at: 0, gust: 60 },

@@ -25,7 +25,14 @@ import {
   type WindPoint,
 } from './history';
 import { localize, resolveLanguage, type LocalizeKey } from './localize/localize';
-import { NO_READING, readWind, resolveSources, type WindReading, type WindSources } from './reading';
+import {
+  NO_READING,
+  readSpeedUnit,
+  readWind,
+  resolveSources,
+  type WindReading,
+  type WindSources,
+} from './reading';
 import { StreakCanvas } from './streak-canvas';
 import { cardStyles } from './styles';
 import type { CardActions, HistoryHours, HomeAssistant, LiveWindCardConfig } from './types';
@@ -233,7 +240,10 @@ export class LiveWindCard extends LitElement {
   protected override willUpdate(): void {
     if (!this._config || !this.hass) return;
     this._language = resolveLanguage(this._config.language, this.hass);
-    this._settings = resolveSettings(this._config, this.hass.config?.unit_system?.wind_speed, this._language);
+    this._settings = resolveSettings(this._config, this._language, {
+      entity: readSpeedUnit(this.hass.states, this._sources.speed),
+      system: this.hass.config?.unit_system?.wind_speed,
+    });
     this._reading = readWind(this.hass.states, this._sources);
     const { direction } = this._reading;
     if (direction !== null) {

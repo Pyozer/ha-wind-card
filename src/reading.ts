@@ -108,6 +108,14 @@ export function readSpeed(states: Record<string, HassEntity>, ref: SourceRef | u
   return speedFromRaw(rawValue(entity, ref.attribute), speedUnitOf(entity?.attributes, ref));
 }
 
+/** The unit the speed entity is written in, as Home Assistant spells it (`km/h`, `m/s`…). */
+export function readSpeedUnit(
+  states: Record<string, HassEntity>,
+  ref: SourceRef | undefined,
+): string | undefined {
+  return ref ? speedUnitOf(states[ref.entity]?.attributes, ref) : undefined;
+}
+
 export function readBearing(states: Record<string, HassEntity>, ref: SourceRef | undefined): number | null {
   if (!ref) return null;
   return parseBearing(rawValue(states[ref.entity], ref.attribute));
