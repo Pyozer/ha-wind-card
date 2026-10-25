@@ -207,6 +207,16 @@ export const cardStyles = css`
     font-weight: 600;
     text-anchor: middle;
     dominant-baseline: central;
+    /* A halo in the color of the disc keeps the letters readable over the petals of the rose. */
+    paint-order: stroke;
+    stroke: var(--lwc-fill);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+
+  .petal {
+    stroke-width: 2.5px;
+    stroke-linejoin: round;
   }
 
   .dial-letter.north {

@@ -65,6 +65,10 @@ export interface LiveWindCardConfig extends CardActions {
   show_beaufort?: boolean;
   show_history?: boolean;
   show_history_arrows?: boolean;
+  /** Wind rose of the history window in the dial. */
+  show_rose?: boolean;
+  /** Colored beam from the pointer towards the center of the dial. */
+  show_beam?: boolean;
   show_updated?: boolean;
   /** Animated wind streaks in the dial. */
   animations?: boolean;

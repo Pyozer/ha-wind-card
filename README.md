@@ -15,9 +15,13 @@ neutral surfaces, with color reserved for the wind itself. The color follows the
 
 ## Features
 
-- **Compass dial** with a pointer on the ring, an arc for the speed (the gusts in a lighter shade),
-  and animated **wind streaks** that cross the dial in the direction the wind blows: the stronger
-  the wind, the more numerous and faster they are.
+- **Compass dial** with a pointer sitting half outside the ring, an arc for the speed (the gusts in
+  a lighter shade), and animated **wind streaks** that cross the dial in the direction the wind
+  blows: the stronger the wind, the more numerous and faster they are.
+- **Wind rose** over the history window shown: a petal per direction, as long as the wind from
+  there was strong, colored by its average force. A gale from the west in the morning and a breeze
+  from the north in the afternoon both show, in proportion. It follows the window you pick (3 hours
+  to 3 days). Hover a petal to read its share of the time and its average speed.
 - **Beaufort force** in the center, in the header and on a 13-segment scale. The whole card takes
   the color of the current force, from calm grey-blue to violet for a hurricane.
 - **Tiles** for the gusts, the direction (letters, degrees and where it blows to) and the maximum
@@ -113,6 +117,8 @@ All are `true` by default.
 | `show_beaufort` | The Beaufort scale. |
 | `show_history` | The history chart. |
 | `show_history_arrows` | The direction arrows under the chart. |
+| `show_rose` | The wind rose of the history window shown, in the dial. |
+| `show_beam` | The colored gradient from the pointer towards the center. Off by default, as it adds up with the rose: turn it on when you hide the rose. |
 | `show_updated` | "updated 2 min ago" under the title. |
 | `animations` | The wind streaks in the dial. |
 
@@ -162,6 +168,15 @@ history_windows: [6, 48, 72]
 history_hours: 48
 ```
 
+The pointer with its beam, without the wind rose:
+
+```yaml
+type: custom:live-wind-card
+weather_entity: weather.home
+show_rose: false
+show_beam: true
+```
+
 Only the dial:
 
 ```yaml
@@ -174,6 +189,7 @@ show_history: false
 
 ### Notes
 
+- **Wind rose**: each sample of the window weighs its speed, so the strongest winds weigh the most. Samples under 1 km/h are left out, as their direction is not reliable. It is drawn from the history, so it needs the recorder like the chart does.
 - **History** comes from the recorder (`history/history_during_period`): once over the longest
   window you offer, then again every 5 minutes (every 15 minutes beyond 24 hours, as it is
   heavier). A sensor that updates every few seconds produces a lot of states over 3 days: offer

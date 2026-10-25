@@ -24,6 +24,7 @@ import {
   type WindPoint,
 } from './history';
 import { localize, resolveLanguage, type LocalizeKey } from './localize/localize';
+import { computeRose, petalPath } from './rose';
 import {
   NO_READING,
   readSpeedUnit,
@@ -40,6 +41,7 @@ import {
   beaufortForce,
   BEAUFORT_COLORS,
   cardinalLetters,
+  dialPoint,
   clockFormat,
   formatAge,
   formatSpeed,
@@ -67,15 +69,8 @@ const BIG_ARROW_PATH = 'M50 30 L38 50 L46 50 L46 69 L54 69 L54 50 L62 50 Z';
 
 /** Ticks of the dial: every 10°, longer at the cardinal points. */
 const TICKS = Array.from({ length: 36 }, (_, i) => {
-  const angle = (i * 10 * Math.PI) / 180;
   const major = i % 9 === 0;
-  const point = (r: number) => ({ x: 120 + r * Math.sin(angle), y: 120 - r * Math.cos(angle) });
-  return { major, from: point(major ? 104 : 106.5), to: point(110.5) };
-});
-
-const polar = (r: number, deg: number) => ({
-  x: 120 + r * Math.sin((deg * Math.PI) / 180),
-  y: 120 - r * Math.cos((deg * Math.PI) / 180),
+  return { major, from: dialPoint(major ? 104 : 106.5, i * 10), to: dialPoint(110.5, i * 10) };
 });
 
 let instances = 0;
@@ -189,7 +184,7 @@ export class LiveWindCard extends LitElement {
   /** Whether the layout shows something drawn from the history. */
   private _needsHistory(): boolean {
     const s = this._settings;
-    return !!s && (s.layout === 'compact' || s.showHistory || s.showStats);
+    return !!s && (s.layout === 'compact' || s.showHistory || s.showStats || s.showRose);
   }
 
   private _startHistory(): void {
@@ -420,16 +415,17 @@ export class LiveWindCard extends LitElement {
       <div class="dial">
         <svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
           <circle class="dial-disc" cx="120" cy="120" r="118" />
+          ${s.showRose && view.available ? this._renderRose() : nothing}
           ${TICKS.map(
             (t) =>
               svg`<line class="dial-tick ${t.major ? 'major' : ''}" x1=${t.from.x} y1=${t.from.y} x2=${t.to.x} y2=${t.to.y} />`,
           )}
           ${letters.map((letter, i) => {
-            const p = polar(93, i * 90);
+            const p = dialPoint(93, i * 90);
             return svg`<text class="dial-letter ${i === 0 ? 'north' : ''}" x=${p.x} y=${p.y}>${letter}</text>`;
           })}
           ${[45, 135, 225, 315].map((a) => {
-            const p = polar(93, a);
+            const p = dialPoint(93, a);
             return svg`<circle class="dial-dot" cx=${p.x} cy=${p.y} r="1.6" />`;
           })}
           <circle class="arc-track" cx="120" cy="120" r="76" stroke-width="7" />
@@ -454,9 +450,14 @@ export class LiveWindCard extends LitElement {
             style="stroke:${view.color};stroke-dasharray:${view.arcSpeed} 100"
           />
           <g class="ptr" style="transform: rotate(${this._rot}deg); opacity: ${hidden ? 0 : 1}">
-            <g transform="translate(120 11)">
-              <circle class="ptr-badge" r="11" />
-              <path class="ptr-arrow" d=${ARROW_PATH} transform=${s.arrow === 'to' ? '' : 'rotate(180)'} />
+            ${s.showBeam ? this._renderBeam() : nothing}
+            <g transform="translate(120 2)">
+              <circle class="ptr-badge" r="14" />
+              <path
+                class="ptr-arrow"
+                d=${ARROW_PATH}
+                transform="scale(1.4) ${s.arrow === 'to' ? '' : 'rotate(180)'}"
+              />
             </g>
           </g>
         </svg>
@@ -468,6 +469,38 @@ export class LiveWindCard extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  /** The wind rose of the window shown: a petal per direction, the current one stronger. */
+  private _renderRose(): SVGTemplateResult {
+    const s = this._settings!;
+    const here = this._reading.direction === null ? -1 : pointIndex(this._reading.direction);
+    const unit = unitLabel(s.unit);
+    return svg`<g class="rose">${computeRose(this._series())
+      .filter((sector) => sector.length > 0.02)
+      .map((sector) => {
+        const color = windColor(sector.mean, s.colors, 'var(--lwc-accent)');
+        const opacity = sector.index === here ? 0.62 : 0.34;
+        const tip = this._t('card.rose_tip', {
+          point: pointName(this._t, sector.index * 22.5),
+          share: String(Math.round(sector.timeShare * 100)),
+          speed: formatSpeed(sector.mean, s.unit, this._language),
+          unit,
+        });
+        return svg`<path class="petal" d=${petalPath(sector.index, sector.length)} style="fill:${color};stroke:${color};fill-opacity:${opacity};stroke-opacity:${opacity}"><title>${tip}</title></path>`;
+      })}</g>`;
+  }
+
+  /** The gradient of the pointer, fading from the badge towards the center. */
+  private _renderBeam(): SVGTemplateResult {
+    const id = `${this._uid}-beam`;
+    return svg`<defs>
+        <linearGradient id=${id} gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="84">
+          <stop offset="0" style="stop-color:var(--lwc-c);stop-opacity:.55" />
+          <stop offset="1" style="stop-color:var(--lwc-c);stop-opacity:0" />
+        </linearGradient>
+      </defs>
+      <path d="M107 4 L133 4 L120 84 Z" style="fill:url(#${id})" />`;
   }
 
   // --- Tiles and Beaufort scale ---
@@ -759,12 +792,12 @@ export class LiveWindCard extends LitElement {
             style="stroke:${view.color};stroke-dasharray:${view.arcSpeed} 100"
           />
           <g class="ptr" style="transform: rotate(${this._rot}deg); opacity: ${hidden ? 0 : 1}">
-            <g transform="translate(50 7)">
-              <circle class="ptr-badge" r="6" />
+            <g transform="translate(50 2)">
+              <circle class="ptr-badge" r="7" />
               <path
                 class="ptr-arrow"
                 d=${ARROW_PATH}
-                transform="scale(0.55) ${s.arrow === 'to' ? '' : 'rotate(180)'}"
+                transform="scale(0.65) ${s.arrow === 'to' ? '' : 'rotate(180)'}"
               />
             </g>
           </g>

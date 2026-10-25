@@ -110,6 +110,8 @@ export class EditorSchema {
           'show_beaufort',
           'show_history',
           'show_history_arrows',
+          'show_rose',
+          'show_beam',
           'show_updated',
           'animations',
         ]),

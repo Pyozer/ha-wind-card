@@ -24,6 +24,8 @@ export const DEFAULTS = {
   show_beaufort: true,
   show_history: true,
   show_history_arrows: true,
+  show_rose: true,
+  show_beam: false,
   show_updated: true,
   animations: true,
   language: 'auto',
@@ -54,6 +56,8 @@ const BOOLEANS = [
   'show_beaufort',
   'show_history',
   'show_history_arrows',
+  'show_rose',
+  'show_beam',
   'show_updated',
   'animations',
 ] as const;
@@ -148,6 +152,8 @@ export interface Settings {
   showBeaufort: boolean;
   showHistory: boolean;
   showHistoryArrows: boolean;
+  showRose: boolean;
+  showBeam: boolean;
   showUpdated: boolean;
   animations: boolean;
 }
@@ -202,6 +208,8 @@ export function resolveSettings(
     showBeaufort: config.show_beaufort ?? DEFAULTS.show_beaufort,
     showHistory: config.show_history ?? DEFAULTS.show_history,
     showHistoryArrows: config.show_history_arrows ?? DEFAULTS.show_history_arrows,
+    showRose: config.show_rose ?? DEFAULTS.show_rose,
+    showBeam: config.show_beam ?? DEFAULTS.show_beam,
     showUpdated: config.show_updated ?? DEFAULTS.show_updated,
     animations: config.animations ?? DEFAULTS.animations,
   };

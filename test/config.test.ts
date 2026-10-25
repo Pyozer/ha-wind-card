@@ -148,6 +148,8 @@ describe('resolveSettings', () => {
       showBeaufort: true,
       showHistory: true,
       showHistoryArrows: true,
+      showRose: true,
+      showBeam: false,
       showUpdated: true,
       animations: true,
     });
@@ -185,6 +187,16 @@ describe('resolveSettings', () => {
     }
     expect(resolveSettings({ type: 'x', compass_letters: 'NESW' }, 'fr').letters).toBe('NESW');
     expect(resolveSettings({ type: 'x', compass_letters: 'NESO' }, 'en').letters).toBe('NESO');
+  });
+
+  it('shows the wind rose and hides the beam by default, each one being a choice', () => {
+    expect(resolveSettings({ type: 'x' }, 'en')).toMatchObject({ showRose: true, showBeam: false });
+    expect(resolveSettings({ type: 'x', show_rose: false, show_beam: true }, 'en')).toMatchObject({
+      showRose: false,
+      showBeam: true,
+    });
+    expect(() => validateConfig({ type: 'x', show_beam: 'yes' })).toThrow(/"show_beam"/);
+    expect(() => validateConfig({ type: 'x', show_rose: 1 })).toThrow(/"show_rose"/);
   });
 
   it('keeps the options set, including the ones that turn something off', () => {

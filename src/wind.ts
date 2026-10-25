@@ -267,6 +267,12 @@ export function arcFraction(kmh: number, max: number): number {
   return Math.min(1, Math.max(0, Math.pow(Math.max(kmh, 0) / max, 0.62)));
 }
 
+/** A point of the dial (240 wide, centered on 120, 120) at a radius and a bearing from the north. */
+export function dialPoint(radius: number, deg: number): { x: number; y: number } {
+  const rad = (deg * Math.PI) / 180;
+  return { x: 120 + radius * Math.sin(rad), y: 120 - radius * Math.cos(rad) };
+}
+
 /** `nice` axis maximum above a peak, with a step suited to the magnitude. */
 export function niceMax(peak: number): number {
   const step = peak > 90 ? 40 : peak > 50 ? 20 : peak > 25 ? 10 : 5;

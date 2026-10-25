@@ -22,6 +22,7 @@ export const en = {
     days: '{days} d',
     updated: 'updated {time}',
     wind_from: 'Wind from {point}',
+    rose_tip: '{point} · {share} % of the time · {speed} {unit} on average',
   },
   bft: {
     f0: 'Calm',
@@ -87,6 +88,8 @@ export const en = {
       show_beaufort: 'Beaufort scale',
       show_history: 'History',
       show_history_arrows: 'Direction arrows in the history',
+      show_rose: 'Wind rose',
+      show_beam: 'Beam from the pointer to the center',
       show_updated: 'Time since the last update',
       animations: 'Animated wind',
       language: 'Language',
@@ -100,6 +103,10 @@ export const en = {
       speed_entity: 'A sensor, or any entity with an attribute to read.',
       direction_entity: 'Degrees (0 to 360) or compass letters, from the state or an attribute.',
       max_speed: 'Speed at which the arc of the dial is full.',
+      show_rose:
+        'The directions the wind came from over the history window shown, the strongest winds weighing the most.',
+      show_beam:
+        'A colored gradient from the pointer towards the center. You may prefer it off when the wind rose is shown.',
       history_windows:
         'The durations the reader can switch between. With a single one, the switch is hidden.',
       animations: 'Streaks crossing the dial, following the wind. Paused when the card is off-screen.',

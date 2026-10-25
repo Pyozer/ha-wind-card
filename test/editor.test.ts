@@ -45,6 +45,16 @@ describe('form data', () => {
     expect(fromFormData({ ...toFormData(changed), unit: 'auto' }, changed)).toEqual(CONFIG);
   });
 
+  it('writes the beam when it is turned on and the rose when it is turned off', () => {
+    expect(toFormData(CONFIG)).toMatchObject({ show_rose: true, show_beam: false });
+    const config = fromFormData({ ...toFormData(CONFIG), show_rose: false, show_beam: true }, CONFIG);
+    expect(config).toEqual({ ...CONFIG, show_rose: false, show_beam: true });
+    expect(fromFormData(toFormData(config), config)).toEqual(config);
+    expect(fromFormData({ ...toFormData(config), show_rose: true, show_beam: false }, config)).toEqual(
+      CONFIG,
+    );
+  });
+
   it('writes a toggle that is on by default when it is turned off, and keeps it off', () => {
     const off = fromFormData({ ...toFormData(CONFIG), animations: false }, CONFIG);
     expect(off.animations).toBe(false);

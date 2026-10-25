@@ -54,6 +54,7 @@ hass + config ─► reading.ts ─► view.ts ─┐
 | `src/history.ts` | Recorder history: `fetchHistory` (`history/history_during_period`, compressed states), `buildSeries` (5-minute grid, last state at or before each time), windows (3 to 72 h), `historyRefreshMs`, peaks, `withLive` (ends the curve on the current reading). |
 | `src/chart.ts` | Geometry of the history chart as data: monotone curve, runs cut at missing data, gradient stops, axis, direction arrows, time labels, `indexAt`; `sparkPaths` for the compact layout. |
 | `src/streaks.ts` | The wind streaks: pure simulation (`stepParticle`, `particleCount`…) and `StreakCanvas`, which draws it on its own animation frames. |
+| `src/rose.ts` | The wind rose of a history window: `computeRose` (16 sectors, each sample weighing its speed, the calm left out) and `petalPath` (the geometry of a petal). |
 | `src/view.ts` | `buildView`: the reading and the settings as the values the card shows (texts, colors, arcs, angles). |
 | `src/entities.ts` | Entity kinds for the editor's pickers, and `guessConfig` (the stub config when adding the card). |
 | `src/actions.ts` | `tap_action`, `hold_action`, `double_tap_action` (`hass-action` event). |
@@ -94,7 +95,7 @@ Design rules:
 Every change or new feature must be **testable and tested**:
 
 - Add or extend tests in `test/` (`*.test.ts`), one file per module: `wind`, `reading`, `history`,
-  `chart`, `streaks`, `config`, `entities`, `view`, `localize`, `editor`, `release-notes`. Create a
+  `chart`, `rose`, `streaks`, `config`, `entities`, `view`, `localize`, `editor`, `release-notes`. Create a
   new file when a new module appears.
 - Design for testing: extract logic into an exported pure function instead of leaving it in the
   component.
@@ -175,3 +176,8 @@ Conventional Commits, in English, concise, no `Co-authored-by`. Details in
 - **`unit: auto` follows the entity, not the unit system.** A metric Home Assistant reports `m/s` as its
   wind speed unit, whatever the unit of the entities: the card reads the unit of the speed entity
   first (`displayUnitOf`), and only falls back on the unit system when it has none it can display.
+- **The pointer sits half outside the dial** (centered on the edge of the disc, radius 118): the SVG
+  keeps `overflow: visible`, and the card padding leaves room for the badge. Do not clip the dial.
+- **The wind rose weighs each sample by its speed.** It is a choice of design (strong winds should
+  show), not a default to change lightly; a time-weighted rose was tried in the mockup and looked
+  much the same on calm data. `show_beam` is off by default because it adds up with the rose.

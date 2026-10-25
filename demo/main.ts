@@ -47,32 +47,54 @@ function random(seed: number): () => number {
   return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 }
 
-/** 24 hours of smooth wind ending on the given values. */
+/**
+ * 72 hours of wind ending on the given values. The wind changes regime along the way (a gentle
+ * easterly, a southerly, a weak northerly, then the current one), so the wind rose of each history
+ * window tells a different story.
+ */
 function simulate(now: number, w: Wind, seed: number): Sample[] {
   const rnd = random(seed);
-  const knots = Array.from({ length: 98 }, () => rnd());
+  const knots = Array.from({ length: 72 * 4 + 2 }, () => rnd());
   const noise = (x: number) => {
-    const k = x * 96;
+    const k = x * (knots.length - 2);
     const i = Math.floor(k);
     return knots[i] * (1 - (k - i)) + knots[i + 1] * (k - i);
   };
-  const base = Math.max(w.speed * 0.8, 5);
+  const regimes = [
+    { x: 0, d: w.dir - 150, f: 0.4 },
+    { x: 0.33, d: w.dir - 100, f: 0.7 },
+    { x: 0.5, d: w.dir - 50, f: 0.95 },
+    { x: 0.6, d: w.dir + 95, f: 0.35 },
+    { x: 0.72, d: w.dir + 95, f: 0.35 },
+    { x: 0.78, d: w.dir - 45, f: 0.8 },
+    { x: 0.9, d: w.dir - 35, f: 0.9 },
+    { x: 0.95, d: w.dir, f: 1.3 },
+    { x: 1, d: w.dir, f: 1 },
+  ];
+  const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+  const regime = (x: number) => {
+    let i = 0;
+    while (i < regimes.length - 2 && x > regimes[i + 1].x) i++;
+    const a = regimes[i];
+    const b = regimes[i + 1];
+    const t = clamp((x - a.x) / (b.x - a.x), 0, 1);
+    const smooth = t * t * (3 - 2 * t);
+    // The shortest way round, so that 350° to 10° does not sweep every direction.
+    const turn = ((b.d - a.d + 540) % 360) - 180;
+    return { d: a.d + turn * smooth, f: a.f + (b.f - a.f) * smooth };
+  };
+  const base = Math.max(w.speed, 5);
   return Array.from({ length: POINTS }, (_, i) => {
     const x = i / (POINTS - 1);
-    const blend = Math.min(1, Math.max(0, (x - 0.93) / 0.07));
-    const shape = 1 + 0.4 * Math.sin(x * 9 + 1.2) + 0.2 * Math.sin(x * 21 + 0.4) + (noise(x) - 0.5) * 0.34;
-    const s = Math.max(0, base * shape) * (1 - blend) + w.speed * blend;
-    const g =
-      Math.max(s, s * (1.25 + noise((x * 1.7 + 0.31) % 1) * 0.35) + 2) * (1 - blend) +
-      Math.max(w.gust, w.speed) * blend;
-    const d =
-      (w.dir +
-        55 * Math.sin(x * 6.5 + 0.8) +
-        18 * Math.sin(x * 17) +
-        (noise((x * 2.3 + 0.6) % 1) - 0.5) * 20 +
-        720) %
-      360;
-    return { t: now - (POINTS - 1 - i) * STEP, s, g, d: d * (1 - blend) + w.dir * blend };
+    const r = regime(x);
+    const blend = clamp((x - 0.985) / 0.015, 0, 1);
+    const s0 = Math.max(0, base * r.f * (1 + (noise(x) - 0.5) * 0.45 + 0.12 * Math.sin(x * 60)));
+    const s = s0 * (1 - blend) + w.speed * blend;
+    const g0 = Math.max(s, s * (1.25 + noise((x * 1.7 + 0.31) % 1) * 0.35) + 2);
+    const g = g0 * (1 - blend) + Math.max(w.gust, w.speed) * blend;
+    const d0 = r.d + (noise((x * 2.3 + 0.6) % 1) - 0.5) * 34 + 9 * Math.sin(x * 90);
+    const d = (((d0 * (1 - blend) + w.dir * blend) % 360) + 360) % 360;
+    return { t: now - (POINTS - 1 - i) * STEP, s, g, d };
   });
 }
 
@@ -190,6 +212,12 @@ const EXAMPLES: Record<string, LiveWindCardConfig> = {
     weather_entity: WEATHER,
     history_windows: [24, 48, 72],
     history_hours: 48,
+  },
+  'Beam, no rose': {
+    type: 'custom:live-wind-card',
+    weather_entity: WEATHER,
+    show_rose: false,
+    show_beam: true,
   },
   'One window': {
     type: 'custom:live-wind-card',

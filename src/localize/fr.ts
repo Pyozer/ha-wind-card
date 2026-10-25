@@ -23,6 +23,7 @@ export const fr: Strings = {
     days: '{days} j',
     updated: 'mis à jour {time}',
     wind_from: 'Vent de {point}',
+    rose_tip: '{point} · {share} % du temps · {speed} {unit} en moyenne',
   },
   bft: {
     f0: 'Calme',
@@ -88,6 +89,8 @@ export const fr: Strings = {
       show_beaufort: 'Échelle de Beaufort',
       show_history: 'Historique',
       show_history_arrows: "Flèches de direction dans l'historique",
+      show_rose: 'Rose des vents',
+      show_beam: 'Faisceau du repère vers le centre',
       show_updated: 'Temps écoulé depuis la dernière mise à jour',
       animations: 'Vent animé',
       language: 'Langue',
@@ -101,6 +104,10 @@ export const fr: Strings = {
       speed_entity: 'Un capteur, ou n’importe quelle entité dont on lit un attribut.',
       direction_entity: 'Des degrés (0 à 360) ou des lettres de la boussole, depuis l’état ou un attribut.',
       max_speed: 'Vitesse à laquelle l’arc du cadran est plein.',
+      show_rose:
+        'Les directions d’où le vent est venu sur la fenêtre d’historique affichée, les vents les plus forts pesant le plus.',
+      show_beam:
+        'Un dégradé de couleur du repère vers le centre. On peut préférer le masquer quand la rose des vents est affichée.',
       history_windows:
         'Les durées entre lesquelles on peut basculer. Avec une seule, le sélecteur est masqué.',
       animations:

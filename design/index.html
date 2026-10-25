@@ -155,7 +155,9 @@
   .wc .dial-disc { fill: var(--wc-fill); }
   .wc .dial-tick { stroke: var(--wc-tick); stroke-width: 1.2; stroke-linecap: round; }
   .wc .dial-tick.major { stroke-width: 1.8; }
-  .wc .dial-letter { fill: var(--wc-muted); font-size: 11.5px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+  .wc .dial-letter { fill: var(--wc-muted); font-size: 11.5px; font-weight: 600; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--wc-fill); stroke-width: 3px; stroke-linejoin: round; }
+  .wc .petal { stroke-linejoin: round; stroke-width: 2.5px; transition: opacity 0.4s; }
+  .wc .beam { fill: url(#beam); }
   .wc .dial-letter.n { fill: var(--wc-north); }
   .wc .dial-dot { fill: var(--wc-tick); }
   .wc .arc-track { stroke: var(--wc-track); fill: none; }
@@ -284,6 +286,8 @@
     <label class="switch"><span>Historique</span><input type="checkbox" id="o-hist" checked /></label>
     <label class="switch"><span>Flèches de direction (historique)</span><input type="checkbox" id="o-harrows" checked /></label>
     <label class="switch"><span>Animation du vent (particules)</span><input type="checkbox" id="o-part" checked /></label>
+    <div class="field"><label>Rose des vents (cumul sur la période)</label>
+      <select id="o-rose"><option value="force">Pondérée par la force du vent</option><option value="time">Pondérée par le temps</option><option value="off">Masquée</option></select></div>
     <div class="editor-note">Tout ceci sera configurable depuis l'interface Home Assistant (éditeur visuel basé sur <code>ha-form</code>), comme pour Live Energy Card.</div>
   </aside>
 
@@ -337,33 +341,73 @@
 
   /* ─────────────── State & mock history ─────────────── */
   const state = { speed: 25, gust: 50, dir: 280, available: true };
-  const opts = { title: 'Vent', unit: 'kmh', arrow: 'to', letters: 'NESO', color: 'bft', max: 100, gust: true, bft: true, hist: true, harrows: true, particles: true, period: 12 };
+  const opts = { title: 'Vent', unit: 'kmh', arrow: 'to', letters: 'NESO', color: 'bft', max: 100, gust: true, bft: true, hist: true, harrows: true, particles: true, period: 12, rose: 'force' };
   const STEP_MIN = 5;
-  const N_POINTS = (24 * 60) / STEP_MIN + 1; // 24 h
+  const N_POINTS = (72 * 60) / STEP_MIN + 1; // 72 h
   let history = [];
 
   function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+  // Wind regimes over the 72 hours, ending on a strong wind from the current direction: the rose
+  // of each window (3, 12, 24 hours, 3 days) tells a different story.
   function makeHistory(speed, gust, dir, seed = 7) {
     const r = rng(seed);
-    const base = Math.max(speed * 0.8, 5);
-    // Smoothed noise: a few random values per hour, linearly interpolated (so no jagged curve).
-    const knots = Array.from({ length: 24 * 4 + 2 }, () => r());
+    const regimes = [
+      { x: 0, d: dir - 150, f: 0.4 },
+      { x: 0.33, d: dir - 100, f: 0.7 },
+      { x: 0.5, d: dir - 50, f: 0.95 },
+      { x: 0.6, d: dir + 95, f: 0.35 },
+      { x: 0.72, d: dir + 95, f: 0.35 },
+      { x: 0.78, d: dir - 45, f: 0.8 },
+      { x: 0.9, d: dir - 35, f: 0.9 },
+      { x: 0.95, d: dir, f: 1.3 },
+      { x: 1, d: dir, f: 1 },
+    ];
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const at = (x) => {
+      let i = 0;
+      while (i < regimes.length - 2 && x > regimes[i + 1].x) i++;
+      const a = regimes[i], b = regimes[i + 1];
+      const t = smooth(clamp((x - a.x) / (b.x - a.x), 0, 1));
+      const dd = ((b.d - a.d + 540) % 360) - 180; // shortest way round
+      return { d: a.d + dd * t, f: a.f + (b.f - a.f) * t };
+    };
+    const base = Math.max(speed, 5);
+    const knots = Array.from({ length: 72 * 4 + 2 }, () => r());
     const noise = (x) => { const k = x * (knots.length - 2); const i = Math.floor(k); const f = k - i; return knots[i] * (1 - f) + knots[i + 1] * f; };
     const out = [];
     for (let i = 0; i < N_POINTS; i++) {
-      const x = i / (N_POINTS - 1); // 0 = 24 h ago, 1 = now
-      const shape = 1 + 0.4 * Math.sin(x * 9 + 1.2) + 0.2 * Math.sin(x * 21 + 0.4) + (noise(x) - 0.5) * 0.34;
-      const blend = clamp((x - 0.93) / 0.07, 0, 1); // glue the end to the current values
-      let s = Math.max(0, base * shape);
+      const x = i / (N_POINTS - 1); // 0 = 72 h ago, 1 = now
+      const reg = at(x);
+      const blend = clamp((x - 0.985) / 0.015, 0, 1); // glue the end to the current values
+      let s = Math.max(0, base * reg.f * (1 + (noise(x) - 0.5) * 0.45 + 0.12 * Math.sin(x * 60)));
       s = s * (1 - blend) + speed * blend;
-      const gf = 1.25 + noise((x * 1.7 + 0.31) % 1) * 0.35;
-      let g = Math.max(s, s * gf + 2);
+      let g = Math.max(s, s * (1.25 + noise((x * 1.7 + 0.31) % 1) * 0.35) + 2);
       g = g * (1 - blend) + Math.max(gust, speed) * blend;
-      let d = dir + 55 * Math.sin(x * 6.5 + 0.8) + 18 * Math.sin(x * 17) + (noise((x * 2.3 + 0.6) % 1) - 0.5) * 20;
+      let d = reg.d + (noise((x * 2.3 + 0.6) % 1) - 0.5) * 34 + 9 * Math.sin(x * 90);
       d = d * (1 - blend) + dir * blend;
       out.push({ s, g, d: ((d % 360) + 360) % 360 });
     }
     return out;
+  }
+
+  /** Wind rose of a window: for each of the 16 sectors, how much wind came from there. */
+  function computeRose(points, weighting) {
+    const sectors = Array.from({ length: 16 }, (_, i) => ({ i, n: 0, sumS: 0, w: 0 }));
+    let total = 0, count = 0;
+    for (const p of points) {
+      if (p.s == null || p.d == null || p.s < 1) continue; // no direction worth reading when calm
+      const sec = sectors[pointIdx(p.d)];
+      const w = weighting === 'time' ? 1 : p.s;
+      sec.n++; sec.sumS += p.s; sec.w += w; total += w; count++;
+    }
+    const maxW = Math.max(0, ...sectors.map((x) => x.w));
+    return sectors.map((x) => ({
+      i: x.i,
+      len: maxW ? Math.pow(x.w / maxW, 0.8) : 0,
+      mean: x.n ? x.sumS / x.n : 0,
+      timeShare: count ? x.n / count : 0,
+      share: total ? x.w / total : 0,
+    }));
   }
   history = makeHistory(state.speed, state.gust, state.dir);
 
@@ -501,7 +545,7 @@
         <div class="wc-hist">
           <div class="hh">
             <div><div class="t">Historique</div><div class="legend"><span><i></i>Vitesse</span><span class="gust-only"><i class="g"></i>Rafales</span></div></div>
-            <div class="wc-seg"><div class="thumb"></div><button data-p="3">3 h</button><button data-p="12">12 h</button><button data-p="24">24 h</button></div>
+            <div class="wc-seg"><div class="thumb"></div><button data-p="3">3 h</button><button data-p="12">12 h</button><button data-p="24">24 h</button><button data-p="72">3 j</button></div>
           </div>
           <div class="wc-chart"><svg></svg><div class="wc-tip"></div></div>
         </div>
@@ -524,6 +568,7 @@
     buildRing() {
       const svg = this.ring; svg.innerHTML = '';
       el('circle', { class: 'dial-disc', cx: 120, cy: 120, r: 118 }, svg);
+      this.roseG = el('g', { class: 'rose' }, svg);
       for (let a = 0; a < 360; a += 10) {
         const major = a % 90 === 0;
         const [x1, y1] = polar(120, 120, major ? 104 : 106.5, a); const [x2, y2] = polar(120, 120, 110.5, a);
@@ -538,9 +583,15 @@
       el('circle', { class: 'arc-track', cx: 120, cy: 120, r: 76, 'stroke-width': 7 }, svg);
       const mk = (cls) => el('circle', { class: cls, cx: 120, cy: 120, r: 76, 'stroke-width': 7, pathLength: 100, transform: 'rotate(-90 120 120)', 'stroke-dasharray': '0 100' }, svg);
       this.arcGust = mk('arc-gust'); this.arcSpeed = mk('arc-speed');
+      // The pointer: a beam fading towards the center, and a larger badge sitting half outside the dial.
+      const defs = el('defs', {}, svg);
+      const grad = el('linearGradient', { id: 'beam', gradientUnits: 'userSpaceOnUse', x1: 0, y1: 4, x2: 0, y2: 84 }, defs);
+      el('stop', { offset: 0, style: 'stop-color: var(--wc-c); stop-opacity: .55' }, grad);
+      el('stop', { offset: 1, style: 'stop-color: var(--wc-c); stop-opacity: 0' }, grad);
       this.ptr = el('g', { class: 'ptr' }, svg);
-      const g = el('g', { transform: 'translate(120 11)' }, this.ptr);
-      el('circle', { class: 'ptr-badge', r: 11 }, g);
+      el('path', { class: 'beam', d: 'M107 4 L133 4 L120 84 Z' }, this.ptr);
+      const g = el('g', { transform: 'translate(120 2)' }, this.ptr);
+      el('circle', { class: 'ptr-badge', r: 14 }, g);
       this.ptrArrow = el('path', { class: 'ptr-arrow', d: ARROW_DOWN }, g);
     }
 
@@ -559,9 +610,9 @@
       el('circle', { class: 'arc-track', cx: 50, cy: 50, r: 36, 'stroke-width': 5 }, svg);
       this.carc = el('circle', { class: 'arc-speed', cx: 50, cy: 50, r: 36, 'stroke-width': 5, pathLength: 100, transform: 'rotate(-90 50 50)', 'stroke-dasharray': '0 100' }, svg);
       this.cpoint = el('g', { class: 'ptr' }, svg);
-      const bg = el('g', { transform: 'translate(50 7)' }, this.cpoint);
-      el('circle', { class: 'ptr-badge', r: 6 }, bg);
-      el('path', { class: 'ptr-arrow', d: ARROW_DOWN, transform: 'scale(0.55)' }, bg);
+      const bg = el('g', { transform: 'translate(50 2)' }, this.cpoint);
+      el('circle', { class: 'ptr-badge', r: 7 }, bg);
+      el('path', { class: 'ptr-arrow', d: ARROW_DOWN, transform: 'scale(0.65)' }, bg);
       this.carrow = el('g', { class: 'carrow' }, svg);
       el('path', { d: 'M50 30 L38 50 L46 50 L46 69 L54 69 L54 50 L62 50 Z', fill: 'var(--wc-c)', style: 'transition: fill .5s' }, this.carrow);
     }
@@ -603,7 +654,8 @@
       this.arcSpeed.setAttribute('stroke-dasharray', `${fs} 100`);
       this.arcGust.setAttribute('stroke-dasharray', `${opts.gust ? fg : 0} 100`);
       this.ptr.style.transform = `rotate(${this.setRot('rot', fromDeg)}deg)`;
-      this.ptrArrow.setAttribute('transform', opts.arrow === 'to' ? '' : 'rotate(180)');
+      this.ptrArrow.setAttribute('transform', 'scale(1.4)' + (opts.arrow === 'to' ? '' : ' rotate(180)'));
+      this.drawRose(av, fromDeg);
       this.streaks.set({ from: s.dir, speed: av ? s.speed : 0, color: colorForRaw(s.speed), on: opts.particles });
 
       this.sGust.innerHTML = `${showV(s.gust)}<small>${u.label}</small>`;
@@ -611,7 +663,7 @@
       this.sDir.innerHTML = av ? `${pointName}<small>${Math.round(s.dir)}°</small>` : '–';
       this.sDirSub.textContent = av ? `vers ${POINT_FULL[pointIdx(toDir)].toLowerCase()}` : '—';
       const pts = this.periodPoints(); const mx = pts.reduce((a, p) => (p.s > a.s ? p : a), pts[0]);
-      this.sPer.textContent = `${opts.period} h`;
+      this.sPer.textContent = opts.period === 72 ? '3 j' : `${opts.period} h`;
       this.sMax.innerHTML = `${showV(mx.s)}<small>${u.label}</small>`;
       this.sMaxSub.textContent = av ? `rafales ${fmt(u.conv(Math.max(...pts.map((p) => p.g))), u.dec)}` : '—';
 
@@ -626,6 +678,19 @@
       const on = this.segEl.querySelector('button.on');
       if (on) { this.thumb.style.width = on.offsetWidth + 'px'; this.thumb.style.transform = `translateX(${on.offsetLeft - 2}px)`; }
       this.drawChart();
+    }
+
+    drawRose(av, fromDeg) {
+      if (!av || opts.rose === 'off') { this.roseG.innerHTML = ''; return; }
+      const here = pointIdx(fromDeg);
+      const half = 9.4, rin = 50;
+      const P = (r, a) => polar(120, 120, r, a).map((v) => v.toFixed(1)).join(' ');
+      this.roseG.innerHTML = computeRose(this.periodPoints(), opts.rose).filter((x) => x.len > 0.02).map((x) => {
+        const a = x.i * 22.5, rout = rin + 5 + x.len * 40, col = colorForRaw(x.mean);
+        const d = `M${P(rin, a - half)} L${P(rout, a - half)} A${rout} ${rout} 0 0 1 ${P(rout, a + half)} L${P(rin, a + half)} A${rin} ${rin} 0 0 0 ${P(rin, a - half)} Z`;
+        const name = POINT_FULL[x.i], u = UNITS[opts.unit];
+        return `<path class="petal" d="${d}" fill="${col}" stroke="${col}" fill-opacity="${x.i === here ? 0.62 : 0.34}" stroke-opacity="${x.i === here ? 0.62 : 0.34}"><title>${name} · ${Math.round(x.timeShare * 100)} % du temps · ${fmt(u.conv(x.mean), u.dec)} ${u.label} en moyenne</title></path>`;
+      }).join('');
     }
 
     periodPoints() { const n = opts.period * (60 / STEP_MIN) + 1; return history.slice(history.length - n); }
@@ -748,7 +813,7 @@
     node.addEventListener(isBox ? 'change' : 'input', (e) => { opts[key] = parse(isBox ? e.target.checked : e.target.value); renderAll(); });
   };
   optBind('o-title', 'title'); optBind('o-unit', 'unit'); optBind('o-arrow', 'arrow'); optBind('o-letters', 'letters'); optBind('o-color', 'color');
-  optBind('o-max', 'max', Number); optBind('o-gust', 'gust'); optBind('o-bft', 'bft'); optBind('o-hist', 'hist'); optBind('o-harrows', 'harrows'); optBind('o-part', 'particles');
+  optBind('o-max', 'max', Number); optBind('o-gust', 'gust'); optBind('o-bft', 'bft'); optBind('o-hist', 'hist'); optBind('o-harrows', 'harrows'); optBind('o-part', 'particles'); optBind('o-rose', 'rose');
 
   // Live simulation: a gentle random walk.
   let liveTimer = 0;
