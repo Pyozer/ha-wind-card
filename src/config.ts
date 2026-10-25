@@ -34,7 +34,10 @@ export const ARROWS: readonly ArrowMode[] = ['to', 'from'];
 export const COMPASS_OPTIONS: readonly ('auto' | CompassLetters)[] = ['auto', 'NESO', 'NESW'];
 export const COLOR_MODES: readonly ColorMode[] = ['beaufort', 'accent'];
 export const LAYOUTS: readonly Layout[] = ['full', 'compact'];
-export const HISTORY_WINDOWS: readonly HistoryHours[] = [3, 12, 24];
+/** Every duration the history can show. */
+export const HISTORY_WINDOWS: readonly HistoryHours[] = [3, 6, 12, 24, 48, 72];
+/** The windows offered when none are chosen. */
+export const DEFAULT_HISTORY_WINDOWS: readonly HistoryHours[] = [3, 12, 24];
 
 const ENUMS: Record<string, readonly (string | number)[]> = {
   unit: UNITS,
@@ -88,6 +91,17 @@ export function validateConfig(input: unknown): LiveWindCardConfig {
     config.max_speed = max;
   }
 
+  if (config.history_windows !== undefined && config.history_windows !== null) {
+    const raw = config.history_windows;
+    const hours = Array.isArray(raw) ? raw.map(Number) : [];
+    if (hours.length === 0 || hours.some((h) => !HISTORY_WINDOWS.includes(h as HistoryHours))) {
+      throw new Error(
+        `Invalid "history_windows": ${JSON.stringify(raw)}. Expected a list made of: ${HISTORY_WINDOWS.join(', ')}.`,
+      );
+    }
+    config.history_windows = hours;
+  }
+
   for (const key of BOOLEANS) {
     if (config[key] === undefined || config[key] === null) continue;
     if (typeof config[key] !== 'boolean') {
@@ -125,6 +139,9 @@ export interface Settings {
   colors: ColorMode;
   maxSpeed: number;
   layout: Layout;
+  /** Windows the reader can switch between, shortest first. */
+  historyWindows: HistoryHours[];
+  /** Window shown at first: always one of `historyWindows`. */
   historyHours: HistoryHours;
   showGust: boolean;
   showStats: boolean;
@@ -137,6 +154,18 @@ export interface Settings {
 
 /** Languages that write the west `O` (Ouest, Oeste, Ovest). */
 const WEST_IS_O = new Set(['fr', 'es', 'it', 'pt']);
+
+/** The windows of a configuration, without duplicates and shortest first; the default ones when none. */
+export function sortedWindows(windows: readonly number[] | undefined): HistoryHours[] {
+  const chosen = HISTORY_WINDOWS.filter((h) => windows?.includes(h));
+  return chosen.length ? chosen : [...DEFAULT_HISTORY_WINDOWS];
+}
+
+/** The window to show first: the wanted one, or the closest one that is selectable (the shorter on a tie). */
+export function pickWindow(windows: readonly HistoryHours[], wanted: number): HistoryHours {
+  if ((windows as readonly number[]).includes(wanted)) return wanted as HistoryHours;
+  return windows.reduce((best, h) => (Math.abs(h - wanted) < Math.abs(best - wanted) ? h : best), windows[0]);
+}
 
 /** Units `auto` can follow, as Home Assistant spells them. */
 export interface KnownUnits {
@@ -155,6 +184,7 @@ export function resolveSettings(
   language: string,
   units: KnownUnits = {},
 ): Settings {
+  const windows = sortedWindows(config.history_windows);
   const unit = config.unit ?? DEFAULTS.unit;
   const letters = config.compass_letters ?? DEFAULTS.compass_letters;
   return {
@@ -165,7 +195,8 @@ export function resolveSettings(
     colors: config.colors ?? DEFAULTS.colors,
     maxSpeed: config.max_speed ?? DEFAULTS.max_speed,
     layout: config.layout ?? DEFAULTS.layout,
-    historyHours: config.history_hours ?? DEFAULTS.history_hours,
+    historyWindows: windows,
+    historyHours: pickWindow(windows, config.history_hours ?? DEFAULTS.history_hours),
     showGust: config.show_gust ?? DEFAULTS.show_gust,
     showStats: config.show_stats ?? DEFAULTS.show_stats,
     showBeaufort: config.show_beaufort ?? DEFAULTS.show_beaufort,

@@ -224,6 +224,20 @@ export function formatSpeed(kmh: number, unit: SpeedUnit, language: string): str
   return formatNumber(convertSpeed(kmh, unit), unitDecimals(unit), language);
 }
 
+/**
+ * Formatter of the times of the chart for a window of `hours`: the time within a day, with the
+ * weekday as well beyond, where the same time comes back every day.
+ */
+export function clockFormat(hours: number, language: string): Intl.DateTimeFormat {
+  const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+  if (hours > 24) options.weekday = 'short';
+  try {
+    return new Intl.DateTimeFormat(language, options);
+  } catch {
+    return new Intl.DateTimeFormat(undefined, options);
+  }
+}
+
 /** How long ago something happened, like "2 min ago", from an age in milliseconds. */
 export function formatAge(ageMs: number, language: string): string {
   const seconds = Math.max(0, Math.round(ageMs / 1000));

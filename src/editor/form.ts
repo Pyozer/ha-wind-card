@@ -1,4 +1,4 @@
-import { DEFAULTS } from '../config';
+import { DEFAULT_HISTORY_WINDOWS, DEFAULTS, sortedWindows } from '../config';
 import type { LiveWindCardConfig } from '../types';
 
 /**
@@ -25,7 +25,7 @@ const FREE_KEYS = [
   'double_tap_action',
 ] as const;
 
-const FORM_KEYS = new Set<string>([...DEFAULT_KEYS, ...FREE_KEYS]);
+const FORM_KEYS = new Set<string>([...DEFAULT_KEYS, ...FREE_KEYS, 'history_windows']);
 
 /** The `select` of the history window deals in strings. */
 const NUMERIC_SELECTS = new Set<string>(['history_hours']);
@@ -34,6 +34,8 @@ export function toFormData(config: LiveWindCardConfig): Record<string, unknown> 
   const data: Record<string, unknown> = { ...config };
   for (const key of DEFAULT_KEYS) data[key] ??= DEFAULTS[key];
   for (const key of NUMERIC_SELECTS) data[key] = String(data[key]);
+  // The windows to offer, as the strings the multiple `select` deals in.
+  data.history_windows = sortedWindows(config.history_windows).map(String);
   return data;
 }
 
@@ -53,6 +55,9 @@ export function fromFormData(
     const value = NUMERIC_SELECTS.has(key) ? Number(raw) : raw;
     if (value !== DEFAULTS[key]) out[key] = value;
   }
+  // Written only when it differs from the default windows; emptying the list brings the default back.
+  const windows = Array.isArray(data.history_windows) ? sortedWindows(data.history_windows.map(Number)) : [];
+  if (windows.length && windows.join() !== DEFAULT_HISTORY_WINDOWS.join()) out.history_windows = windows;
   for (const key of FREE_KEYS) {
     const value = data[key];
     if (value === undefined || value === null || value === '') continue;

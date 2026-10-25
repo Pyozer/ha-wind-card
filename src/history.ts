@@ -12,14 +12,18 @@ import {
 import { parseBearing } from './wind';
 
 /**
- * History of the wind: fetched once for 24 hours from the recorder, resampled on a regular grid
- * (every 5 minutes), then cut into the 3, 12 or 24 hour windows the reader switches between.
+ * History of the wind: fetched from the recorder over the longest window the reader can pick,
+ * resampled on a regular grid (every 5 minutes), then cut into the windows the reader switches
+ * between (3 hours to 3 days).
  */
 
 export const STEP_MS = 5 * 60_000;
-export const MAX_HOURS = 24;
 export const POINTS_PER_HOUR = 60 / 5;
-export const HISTORY_REFRESH_MS = 5 * 60_000;
+
+/** How often the history is read again: more rarely when it spans days, as it is heavier. */
+export function historyRefreshMs(hours: number): number {
+  return hours > 24 ? 15 * 60_000 : 5 * 60_000;
+}
 
 /** A sample of the wind: `null` where an entity had nothing (unavailable, not recorded yet). */
 export interface WindPoint {

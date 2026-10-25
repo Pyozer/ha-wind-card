@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildSeries,
   fetchHistory,
+  historyRefreshMs,
   liveUnits,
   peakOf,
   STEP_MS,
@@ -189,5 +190,14 @@ describe('liveUnits', () => {
       'sensor.gust': { entity_id: 'sensor.gust', state: '1', attributes: {} },
     };
     expect(liveUnits(states, sensors)).toEqual({ speed: 'm/s', gust: undefined });
+  });
+});
+
+describe('historyRefreshMs', () => {
+  it('reads a history of days less often than a history of hours', () => {
+    expect(historyRefreshMs(3)).toBe(5 * 60_000);
+    expect(historyRefreshMs(24)).toBe(5 * 60_000);
+    expect(historyRefreshMs(48)).toBe(15 * 60_000);
+    expect(historyRefreshMs(72)).toBe(15 * 60_000);
   });
 });

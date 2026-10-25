@@ -51,7 +51,7 @@ hass + config ─► reading.ts ─► view.ts ─┐
 | `src/config.ts` | `DEFAULTS`, `validateConfig` (coercion, readable errors), `resolveSettings` (defaults applied, `auto` resolved), watched entities. |
 | `src/wind.ts` | Wind maths, no DOM: Beaufort scale and colors, compass (16 points, `O`/`W`, bearing parsing, shortest-path rotation), speed units and conversion, number and age formatting, dial arc, axis maximum. |
 | `src/reading.ts` | What to read (`resolveSources`: a dedicated entity wins over the weather entity) and how (`readWind`: km/h and degrees whatever the unit or the spelling). |
-| `src/history.ts` | Recorder history: `fetchHistory` (`history/history_during_period`, compressed states), `buildSeries` (5-minute grid, last state at or before each time), windows (3, 12, 24 h), peaks, `withLive` (ends the curve on the current reading). |
+| `src/history.ts` | Recorder history: `fetchHistory` (`history/history_during_period`, compressed states), `buildSeries` (5-minute grid, last state at or before each time), windows (3 to 72 h), `historyRefreshMs`, peaks, `withLive` (ends the curve on the current reading). |
 | `src/chart.ts` | Geometry of the history chart as data: monotone curve, runs cut at missing data, gradient stops, axis, direction arrows, time labels, `indexAt`; `sparkPaths` for the compact layout. |
 | `src/streaks.ts` | The wind streaks: pure simulation (`stepParticle`, `particleCount`…) and `StreakCanvas`, which draws it on its own animation frames. |
 | `src/view.ts` | `buildView`: the reading and the settings as the values the card shows (texts, colors, arcs, angles). |
@@ -162,8 +162,11 @@ Conventional Commits, in English, concise, no `Co-authored-by`. Details in
   the card resolves it with `getComputedStyle` first (`_cssColor`).
 - **`ha-form` groups**: an `expandable` with `flatten: true` keeps its fields at the top level of
   the data. The `attribute` selector finds its entity through `context: { filter_entity }`.
-- **The `select` selector deals in strings**: the history window (`3`, `12`, `24`) is converted back
-  to a number in `fromFormData`.
+- **The `select` selector deals in strings**: the history windows (`3`… `72`) are converted back to
+  numbers in `fromFormData`, and `history_windows` is only written when it differs from the default.
+- **The window shown first must be one that can be picked**: `pickWindow` takes the closest of
+  `history_windows` (the shorter on a tie), whatever `history_hours` says. The history is read over
+  the longest window offered, and the switch is hidden when only one is.
 - **Non-breaking spaces in `Intl` output** (`5 min` in French): match with `\s`, not a plain space.
 - **Hidden elements keep their grid cell.** An option that hides a tile must change the number of
   columns (`--tiles`), otherwise an empty cell is left.

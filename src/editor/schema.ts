@@ -17,7 +17,7 @@ const text = (name: string): Schema => ({ name, selector: { text: {} } });
 
 /** Key of the label of an option: the history windows are `h3`, `h12`, `h24`. */
 const optionKey = (field: string, value: string | number): LocalizeKey =>
-  `editor.option.${field}.${field === 'history_hours' ? `h${value}` : value}` as LocalizeKey;
+  `editor.option.${field.startsWith('history_') ? 'history_hours' : field}.${field.startsWith('history_') ? `h${value}` : value}` as LocalizeKey;
 
 export class EditorSchema {
   constructor(
@@ -25,12 +25,13 @@ export class EditorSchema {
     private readonly hass: HomeAssistant | undefined,
   ) {}
 
-  private select(field: string, values: readonly (string | number)[]): Schema {
+  private select(field: string, values: readonly (string | number)[], multiple = false): Schema {
     return {
       name: field,
       selector: {
         select: {
-          mode: 'dropdown',
+          // Several choices are checkboxes: they are all in sight, and ticked or not.
+          ...(multiple ? { multiple: true, mode: 'list' } : { mode: 'dropdown' }),
           options: values.map((value) => ({ value: String(value), label: this.t(optionKey(field, value)) })),
         },
       },
@@ -89,6 +90,7 @@ export class EditorSchema {
           grid([this.select('unit', UNITS), this.select('arrow', ARROWS)]),
           grid([this.select('compass_letters', COMPASS_OPTIONS), this.select('colors', COLOR_MODES)]),
           grid([this.select('layout', LAYOUTS), this.select('history_hours', HISTORY_WINDOWS)]),
+          this.select('history_windows', HISTORY_WINDOWS, true),
           {
             name: 'max_speed',
             selector: { number: { min: 10, max: 300, step: 5, mode: 'box', unit_of_measurement: 'km/h' } },

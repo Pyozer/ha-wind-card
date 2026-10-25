@@ -23,6 +23,7 @@ describe('form data', () => {
       expect(data[key], key).toBe(key === 'history_hours' ? String(value) : value);
     }
     expect(data.weather_entity).toBe('weather.home');
+    expect(data.history_windows).toEqual(['3', '12', '24']);
   });
 
   it('writes only what differs from the defaults', () => {
@@ -48,6 +49,23 @@ describe('form data', () => {
     const off = fromFormData({ ...toFormData(CONFIG), animations: false }, CONFIG);
     expect(off.animations).toBe(false);
     expect(fromFormData(toFormData(off), off).animations).toBe(false);
+  });
+
+  it('shows the windows chosen, shortest first, and writes them back as numbers', () => {
+    const config: LiveWindCardConfig = { ...CONFIG, history_windows: [72, 3, 24] };
+    expect(toFormData(config).history_windows).toEqual(['3', '24', '72']);
+    expect(fromFormData(toFormData(config), config).history_windows).toEqual([3, 24, 72]);
+    const picked = fromFormData({ ...toFormData(CONFIG), history_windows: ['24', '3', '6', '48'] }, CONFIG);
+    expect(picked.history_windows).toEqual([3, 6, 24, 48]);
+  });
+
+  it('does not write the default windows, and brings them back when the list is emptied', () => {
+    expect(fromFormData({ ...toFormData(CONFIG), history_windows: ['12', '24', '3'] }, CONFIG)).toEqual(
+      CONFIG,
+    );
+    const config: LiveWindCardConfig = { ...CONFIG, history_windows: [24] };
+    expect(fromFormData({ ...toFormData(config), history_windows: [] }, config)).toEqual(CONFIG);
+    expect(fromFormData({ ...toFormData(config), history_windows: undefined }, config)).toEqual(CONFIG);
   });
 
   it('turns the history window back into a number', () => {
@@ -133,6 +151,7 @@ describe('editor schema', () => {
         'colors',
         'layout',
         'history_hours',
+        'history_windows',
         'language',
       ]);
       for (const { name, options } of selects) {

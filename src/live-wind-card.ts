@@ -11,14 +11,13 @@ import {
 import { classMap } from 'lit/directives/class-map.js';
 import { actionHandlers, isInteractive } from './actions';
 import { buildChart, PLOT_HEIGHT, sparkPaths, type ChartModel } from './chart';
-import { HISTORY_WINDOWS, resolveSettings, validateConfig, watchedEntities, type Settings } from './config';
+import { resolveSettings, validateConfig, watchedEntities, type Settings } from './config';
 import { guessConfig } from './entities';
 import {
   buildSeries,
   fetchHistory,
-  HISTORY_REFRESH_MS,
+  historyRefreshMs,
   liveUnits,
-  MAX_HOURS,
   peakOf,
   windowOf,
   withLive,
@@ -36,11 +35,12 @@ import {
 import { StreakCanvas } from './streak-canvas';
 import { cardStyles } from './styles';
 import type { CardActions, HistoryHours, HomeAssistant, LiveWindCardConfig } from './types';
-import { buildView, pointName, type WindView } from './view';
+import { buildView, pointName, windowLabel, type WindView } from './view';
 import {
   beaufortForce,
   BEAUFORT_COLORS,
   cardinalLetters,
+  clockFormat,
   formatAge,
   formatSpeed,
   MAX_FORCE,
@@ -194,8 +194,16 @@ export class LiveWindCard extends LitElement {
 
   private _startHistory(): void {
     if (this._historyTimer !== undefined || !this.hass || !this.isConnected || !this._needsHistory()) return;
-    this._historyTimer = window.setInterval(() => void this._refreshHistory(), HISTORY_REFRESH_MS);
+    this._historyTimer = window.setInterval(
+      () => void this._refreshHistory(),
+      historyRefreshMs(this._span()),
+    );
     void this._refreshHistory();
+  }
+
+  /** Hours of history to read: the longest window the reader can pick. */
+  private _span(): number {
+    return Math.max(...(this._settings?.historyWindows ?? [24]));
   }
 
   private _stopHistory(): void {
@@ -208,7 +216,7 @@ export class LiveWindCard extends LitElement {
     const config = this._config;
     if (!hass || !config) return;
     const end = Date.now();
-    const start = end - MAX_HOURS * 3_600_000;
+    const start = end - this._span() * 3_600_000;
     const sources = this._sources;
     const result = await fetchHistory(hass, sources, start, end);
     // Ignore a late answer for a configuration that has changed since.
@@ -496,7 +504,7 @@ export class LiveWindCard extends LitElement {
         </div>
         <div class="stat">
           <div class="label">
-            ${icon(mdiTrendingUp)}${this._t('card.max', { hours: String(this._period ?? s.historyHours) })}
+            ${icon(mdiTrendingUp)}${this._t('card.max', { period: windowLabel(this._t, this._period ?? s.historyHours) })}
           </div>
           <div class="value">${this._withUnit(view.maxSpeed, view.unit)}</div>
           <div class="note">
@@ -554,25 +562,32 @@ export class LiveWindCard extends LitElement {
               ${s.showGust ? html`<span><i class="gust"></i>${this._t('card.gust')}</span>` : nothing}
             </div>
           </div>
-          <div class="seg" role="group">
-            <div class="thumb" style=${this._thumbStyle(period)}></div>
-            ${HISTORY_WINDOWS.map(
-              (hours) =>
-                html`<button class=${hours === period ? 'on' : ''} @click=${() => this._setPeriod(hours)}>
-                  ${this._t('card.hours', { hours: String(hours) })}
-                </button>`,
-            )}
-          </div>
+          ${
+            s.historyWindows.length > 1
+              ? html`<div class="seg ${s.historyWindows.length > 4 ? 'many' : ''}" role="group">
+                  <div class="thumb" style=${this._thumbStyle(s.historyWindows, period)}></div>
+                  ${s.historyWindows.map(
+                    (hours) =>
+                      html`<button
+                        class=${hours === period ? 'on' : ''}
+                        @click=${() => this._setPeriod(hours)}
+                      >
+                        ${windowLabel(this._t, hours)}
+                      </button>`,
+                  )}
+                </div>`
+              : nothing
+          }
         </div>
         ${this._renderChart()}
       </div>
     `;
   }
 
-  /** Position of the sliding thumb behind the selected window: the three buttons are laid out the same way. */
-  private _thumbStyle(period: HistoryHours): string {
-    const index = HISTORY_WINDOWS.indexOf(period);
-    return `width: calc((100% - 4px) / ${HISTORY_WINDOWS.length}); transform: translateX(calc(${index} * 100% + 2px))`;
+  /** Position of the sliding thumb behind the selected window: the buttons all have the same width. */
+  private _thumbStyle(windows: readonly HistoryHours[], period: HistoryHours): string {
+    const index = Math.max(0, windows.indexOf(period));
+    return `width: calc((100% - 4px) / ${windows.length}); transform: translateX(calc(${index} * 100% + 2px))`;
   }
 
   private _setPeriod(hours: HistoryHours): void {
@@ -584,7 +599,7 @@ export class LiveWindCard extends LitElement {
     const s = this._settings!;
     if (this._chartWidth < 40) return undefined;
     const language = this._language;
-    const time = new Intl.DateTimeFormat(language, { hour: '2-digit', minute: '2-digit' });
+    const time = clockFormat(this._period ?? s.historyHours, language);
     return buildChart({
       points: this._series(),
       width: this._chartWidth,
@@ -678,9 +693,7 @@ export class LiveWindCard extends LitElement {
     if (!point) return nothing;
     const series = this._series();
     const last = point.index === series.length - 1;
-    const time = new Intl.DateTimeFormat(this._language, { hour: '2-digit', minute: '2-digit' }).format(
-      point.t,
-    );
+    const time = clockFormat(this._period ?? s.historyHours, this._language).format(point.t);
     const value = (kmh: number | null) => (kmh === null ? '–' : formatSpeed(kmh, s.unit, this._language));
     const left = Math.min(Math.max(m.x(point.index), 62), m.plotWidth - 20);
     return html`<div class="tip" style="left:${left}px">

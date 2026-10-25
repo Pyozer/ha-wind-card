@@ -11,7 +11,7 @@ export const fr: Strings = {
     gust: 'Rafales',
     origin: 'Provenance',
     toward: 'vers {point}',
-    max: 'Max · {hours} h',
+    max: 'Max · {period}',
     gusts_up_to: 'rafales {value}',
     gust_short: 'raf.',
     beaufort_scale: 'Échelle de Beaufort',
@@ -20,6 +20,7 @@ export const fr: Strings = {
     now: 'Maintenant',
     now_short: 'Maint.',
     hours: '{hours} h',
+    days: '{days} j',
     updated: 'mis à jour {time}',
     wind_from: 'Vent de {point}',
   },
@@ -80,7 +81,8 @@ export const fr: Strings = {
       colors: 'Couleurs',
       max_speed: 'Vitesse du cadran plein (km/h)',
       layout: 'Disposition',
-      history_hours: "Fenêtre de l'historique",
+      history_hours: "Fenêtre de l'historique affichée d'abord",
+      history_windows: "Fenêtres d'historique proposées",
       show_gust: 'Rafales',
       show_stats: 'Tuiles rafales, direction et maximum',
       show_beaufort: 'Échelle de Beaufort',
@@ -99,6 +101,8 @@ export const fr: Strings = {
       speed_entity: 'Un capteur, ou n’importe quelle entité dont on lit un attribut.',
       direction_entity: 'Des degrés (0 à 360) ou des lettres de la boussole, depuis l’état ou un attribut.',
       max_speed: 'Vitesse à laquelle l’arc du cadran est plein.',
+      history_windows:
+        'Les durées entre lesquelles on peut basculer. Avec une seule, le sélecteur est masqué.',
       animations:
         'Des traînées traversent le cadran en suivant le vent. En pause quand la carte n’est pas visible.',
       language: 'Langue de la carte ; automatique suit ton profil Home Assistant.',
@@ -131,8 +135,11 @@ export const fr: Strings = {
       },
       history_hours: {
         h3: '3 heures',
+        h6: '6 heures',
         h12: '12 heures',
         h24: '24 heures',
+        h48: '2 jours',
+        h72: '3 jours',
       },
       language: {
         auto: 'Automatique',

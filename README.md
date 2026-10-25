@@ -10,7 +10,7 @@ neutral surfaces, with color reserved for the wind itself. The color follows the
  O │   25   │ E  50 km/h    W 280°     33 km/h
    │  km/h  │
    ╰────────╯    Beaufort scale  ●━━━━━━━━━━━
-        S        History  3 h · 12 h · 24 h
+        S        History  3 h · 12 h · 24 h  (up to 3 d)
 ```
 
 ## Features
@@ -22,9 +22,10 @@ neutral surfaces, with color reserved for the wind itself. The color follows the
   the color of the current force, from calm grey-blue to violet for a hurricane.
 - **Tiles** for the gusts, the direction (letters, degrees and where it blows to) and the maximum
   of the period.
-- **History** over 3, 12 or 24 hours, with the gusts, a direction arrow per sample and a cursor
-  that follows a finger or the pointer. Read from the recorder; the curve is cut where a sensor
-  was unavailable.
+- **History** from 3 hours to 3 days, with the gusts, a direction arrow per sample and a cursor
+  that follows a finger or the pointer. You choose which windows the reader can switch between
+  (3, 6, 12, 24 hours, 2 or 3 days; 3, 12 and 24 hours by default). Read from the recorder; the
+  curve is cut where a sensor was unavailable.
 - **Full or compact layout.** The card adapts to its width: a dial next to the tiles on a wide
   card, stacked on a phone. The compact layout is a single line with a small curve.
 - **One weather entity is enough**: speed, gusts and direction are read from its attributes. Any
@@ -97,7 +98,8 @@ out; without a direction, the pointer and the arrows are hidden.
 | `compass_letters` | `auto` | `auto` (follows the language), `NESO` (French, Spanish, Italian, Portuguese) or `NESW`. |
 | `colors` | `beaufort` | `beaufort` (color of the force) or `accent` (the theme's primary color). |
 | `max_speed` | `100` | Speed (km/h) at which the arc of the dial is full. |
-| `history_hours` | `12` | Window shown at first: `3`, `12` or `24`. The reader can switch. |
+| `history_windows` | `[3, 12, 24]` | The windows the reader can switch between, among `3`, `6`, `12`, `24`, `48` and `72` hours (the last two are shown as 2 and 3 days). A single one hides the switch. |
+| `history_hours` | `12` | Window shown at first. When it is not one of `history_windows`, the closest one is used. |
 | `language` | `auto` | `auto`, `en` or `fr`. |
 
 ### Elements
@@ -151,6 +153,15 @@ weather_entity: weather.home
 layout: compact
 ```
 
+Choose the history windows (here 6 hours, 2 days and 3 days, starting on 2 days):
+
+```yaml
+type: custom:live-wind-card
+weather_entity: weather.home
+history_windows: [6, 48, 72]
+history_hours: 48
+```
+
 Only the dial:
 
 ```yaml
@@ -163,8 +174,10 @@ show_history: false
 
 ### Notes
 
-- **History** comes from the recorder (`history/history_during_period`), once for 24 hours and
-  every 5 minutes after. An entity excluded from the recorder has no history: the card then shows
+- **History** comes from the recorder (`history/history_during_period`): once over the longest
+  window you offer, then again every 5 minutes (every 15 minutes beyond 24 hours, as it is
+  heavier). A sensor that updates every few seconds produces a lot of states over 3 days: offer
+  the long windows only when you need them. An entity excluded from the recorder has no history: the card then shows
   the current wind only. A weather entity's history is read from its attributes, which the recorder
   keeps with each state.
 - **Units**: the unit of a sensor is read from its `unit_of_measurement`, that of a weather entity

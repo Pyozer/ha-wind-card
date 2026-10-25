@@ -30,7 +30,8 @@ let dark = false;
 // --- Simulated history ------------------------------------------------------------------------
 
 const STEP = 300_000;
-const POINTS = 289;
+// 72 hours, the longest window the card can show.
+const POINTS = 865;
 
 interface Sample {
   t: number;
@@ -127,20 +128,24 @@ function callWS<T>(msg: Record<string, unknown>): Promise<T> {
   const withAttributes = msg.no_attributes === false;
   const out: Record<string, unknown[]> = {};
   for (const id of ids) {
-    out[id] = samples.map((p) => {
-      const lu = p.t / 1000;
-      if (id === WEATHER) {
-        return {
-          s: 'partlycloudy',
-          lu,
-          a: { wind_speed: p.s, wind_gust_speed: p.g, wind_bearing: p.d, wind_speed_unit: 'km/h' },
-        };
-      }
-      const value = id === SPEED ? p.s : id === GUST ? p.g : p.d;
-      return withAttributes
-        ? { s: String(value), lu, a: { unit_of_measurement: id === DIRECTION ? '°' : 'km/h' } }
-        : { s: String(Math.round(value * 10) / 10), lu };
-    });
+    // Like the recorder: the states of the period, from the one in force when it starts.
+    const since = Date.parse(msg.start_time as string) - STEP;
+    out[id] = samples
+      .filter((p) => p.t >= since)
+      .map((p) => {
+        const lu = p.t / 1000;
+        if (id === WEATHER) {
+          return {
+            s: 'partlycloudy',
+            lu,
+            a: { wind_speed: p.s, wind_gust_speed: p.g, wind_bearing: p.d, wind_speed_unit: 'km/h' },
+          };
+        }
+        const value = id === SPEED ? p.s : id === GUST ? p.g : p.d;
+        return withAttributes
+          ? { s: String(value), lu, a: { unit_of_measurement: id === DIRECTION ? '°' : 'km/h' } }
+          : { s: String(Math.round(value * 10) / 10), lu };
+      });
   }
   return new Promise((resolve) => setTimeout(() => resolve(out as T), 250));
 }
@@ -179,6 +184,17 @@ const EXAMPLES: Record<string, LiveWindCardConfig> = {
     unit: 'ms',
     colors: 'accent',
     arrow: 'from',
+  },
+  'Days of history': {
+    type: 'custom:live-wind-card',
+    weather_entity: WEATHER,
+    history_windows: [24, 48, 72],
+    history_hours: 48,
+  },
+  'One window': {
+    type: 'custom:live-wind-card',
+    weather_entity: WEATHER,
+    history_windows: [12],
   },
   Minimal: {
     type: 'custom:live-wind-card',

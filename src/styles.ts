@@ -410,9 +410,10 @@ export const cardStyles = css`
 
   .hist .hh {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px 12px;
   }
 
   .hist .hh .t {
@@ -465,6 +466,10 @@ export const cardStyles = css`
     border-radius: 7px;
     cursor: pointer;
     transition: color 0.25s;
+  }
+
+  .seg.many button {
+    padding: 4px 8px;
   }
 
   .seg button.on {

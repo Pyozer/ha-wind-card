@@ -3,7 +3,7 @@ import { resolveSettings } from '../src/config';
 import { localize, type LocalizeKey } from '../src/localize/localize';
 import type { WindReading } from '../src/reading';
 import type { LiveWindCardConfig } from '../src/types';
-import { buildView, forceName, pointName } from '../src/view';
+import { buildView, forceName, pointName, windowLabel } from '../src/view';
 import { BEAUFORT_COLORS } from '../src/wind';
 
 const t = (language: string) => (key: LocalizeKey, vars?: Record<string, string>) =>
@@ -102,5 +102,16 @@ describe('buildView', () => {
     expect(forceName(t('en'), 12)).toBe('Hurricane');
     expect(pointName(t('fr'), 247.5)).toBe('Ouest-sud-ouest');
     expect(pointName(t('en'), 359)).toBe('North');
+  });
+});
+
+describe('windowLabel', () => {
+  it('writes hours, and days from two days on', () => {
+    expect(windowLabel(t('en'), 3)).toBe('3 h');
+    expect(windowLabel(t('en'), 24)).toBe('24 h');
+    expect(windowLabel(t('en'), 48)).toBe('2 d');
+    expect(windowLabel(t('en'), 72)).toBe('3 d');
+    expect(windowLabel(t('fr'), 72)).toBe('3 j');
+    expect(windowLabel(t('fr'), 6)).toBe('6 h');
   });
 });

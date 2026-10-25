@@ -58,7 +58,7 @@ describe('localize', () => {
 
   it('fills the placeholders', () => {
     expect(localize('en', 'card.force', { force: '4' })).toBe('Force 4');
-    expect(localize('fr', 'card.max', { hours: '12' })).toBe('Max · 12 h');
+    expect(localize('fr', 'card.max', { period: '12 h' })).toBe('Max · 12 h');
   });
 });
 

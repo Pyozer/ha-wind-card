@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   arcFraction,
+  clockFormat,
   beaufortForce,
   beaufortToKmh,
   BEAUFORT_COLORS,
@@ -190,5 +191,22 @@ describe('age', () => {
     expect(formatAge(5 * 60_000, 'fr')).toMatch(/5\smin/);
     expect(formatAge(3 * 86_400_000, 'en')).toMatch(/3 days/);
     expect(formatAge(-5000, 'en')).toBe('now');
+  });
+});
+
+describe('clockFormat', () => {
+  const t = Date.UTC(2026, 9, 26, 14, 30);
+
+  it('shows the time within a day, and the weekday as well beyond', () => {
+    const day = clockFormat(24, 'en').format(t);
+    const days = clockFormat(48, 'en').format(t);
+    expect(day).toMatch(/\d{1,2}:30/);
+    expect(day).not.toMatch(/Mon|Sun|Tue/);
+    expect(days).toMatch(/Mon|Sun|Tue/);
+    expect(clockFormat(3, 'fr').format(t)).toMatch(/:30/);
+  });
+
+  it('copes with a language it does not know', () => {
+    expect(clockFormat(12, 'not a language').format(t)).toMatch(/30/);
   });
 });

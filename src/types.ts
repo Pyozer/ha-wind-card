@@ -7,7 +7,8 @@ export type CompassLetters = 'NESO' | 'NESW';
 export type ColorMode = 'beaufort' | 'accent';
 export type Layout = 'full' | 'compact';
 export type ArrowMode = 'to' | 'from';
-export type HistoryHours = 3 | 12 | 24;
+/** Durations the history can show, in hours (48 and 72 are written as 2 and 3 days). */
+export type HistoryHours = 3 | 6 | 12 | 24 | 48 | 72;
 
 /** A Home Assistant action (`tap_action`…), as handled by the frontend's `hass-action` event. */
 export interface ActionConfig {
@@ -54,8 +55,10 @@ export interface LiveWindCardConfig extends CardActions {
   /** Speed (km/h) at which the arc of the dial is full. */
   max_speed?: number;
   layout?: Layout;
-  /** History window shown at first; the reader can switch between 3, 12 and 24 hours. */
+  /** History window shown at first (the closest selectable one when it is not among the windows). */
   history_hours?: HistoryHours;
+  /** History windows the reader can switch between; one alone hides the switch. */
+  history_windows?: HistoryHours[];
 
   show_gust?: boolean;
   show_stats?: boolean;

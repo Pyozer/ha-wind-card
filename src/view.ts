@@ -52,6 +52,13 @@ export function pointName(t: Translate, bearing: number): string {
   return t(`compass.p${pointIndex(bearing)}` as LocalizeKey);
 }
 
+/** A history window as text: hours, or days from two days on ("12 h", "24 h", "2 d"). */
+export function windowLabel(t: Translate, hours: number): string {
+  return hours >= 48 && hours % 24 === 0
+    ? t('card.days', { days: String(hours / 24) })
+    : t('card.hours', { hours: String(hours) });
+}
+
 export function forceName(t: Translate, force: number): string {
   return t(`bft.f${force}` as LocalizeKey);
 }
