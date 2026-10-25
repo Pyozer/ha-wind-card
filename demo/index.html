@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Wind Card · Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --primary-background-color: #f2f2f7;
+        --secondary-background-color: #e9e9ee;
+        --card-background-color: #ffffff;
+        --primary-text-color: #1c1c1e;
+        --secondary-text-color: #8e8e93;
+        --divider-color: rgba(60, 60, 67, 0.14);
+        --primary-color: #03a9f4;
+        --ha-card-border-radius: 18px;
+        --ha-card-border-color: transparent;
+        --ha-card-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 24px rgba(0, 0, 0, 0.05);
+      }
+      :root[data-theme='dark'] {
+        color-scheme: dark;
+        --primary-background-color: #000000;
+        --secondary-background-color: #1c1c1e;
+        --card-background-color: #1c1c1e;
+        --primary-text-color: #f5f5f7;
+        --secondary-text-color: #98989d;
+        --divider-color: rgba(255, 255, 255, 0.14);
+        --ha-card-border-color: rgba(255, 255, 255, 0.06);
+        --ha-card-box-shadow: none;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--primary-background-color);
+        color: var(--primary-text-color);
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        transition: background-color 0.3s ease;
+      }
+      header {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 28px 28px 8px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 26px;
+        letter-spacing: -0.02em;
+      }
+      header p {
+        margin: 6px 0 0;
+        color: var(--secondary-text-color);
+        font-size: 14px;
+        max-width: 760px;
+        line-height: 1.45;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 24px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 20px 28px 60px;
+        align-items: start;
+      }
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: 1fr;
+          padding: 16px;
+        }
+      }
+      aside {
+        background: var(--card-background-color);
+        border-radius: 16px;
+        padding: 16px;
+        position: sticky;
+        top: 16px;
+        max-height: calc(100vh - 32px);
+        overflow: auto;
+      }
+      @media (max-width: 900px) {
+        aside {
+          position: static;
+          max-height: none;
+        }
+      }
+      h2 {
+        margin: 18px 0 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--secondary-text-color);
+        font-weight: 600;
+      }
+      h2:first-child {
+        margin-top: 0;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 4px 10px;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+      .row .val {
+        color: var(--secondary-text-color);
+        font-variant-numeric: tabular-nums;
+        font-size: 13px;
+      }
+      .row input[type='range'] {
+        grid-column: 1 / -1;
+        width: 100%;
+        accent-color: #007aff;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        border: 0;
+        background: color-mix(in srgb, var(--primary-text-color) 7%, transparent);
+        color: var(--primary-text-color);
+        font: inherit;
+        font-size: 13px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .chip.on {
+        background: #007aff;
+        color: #fff;
+      }
+      .switch {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 10px 0;
+        font-size: 14px;
+        gap: 10px;
+      }
+      select,
+      textarea {
+        width: 100%;
+        font: inherit;
+        font-size: 14px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        border: 0;
+        background: color-mix(in srgb, var(--primary-text-color) 6%, transparent);
+        color: var(--primary-text-color);
+      }
+      textarea {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        min-height: 190px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+      .error {
+        color: #ff3b30;
+        font-size: 12px;
+        margin-top: 6px;
+        min-height: 1em;
+      }
+      .gallery {
+        display: grid;
+        gap: 28px;
+        min-width: 0;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+        margin: 0 4px 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+        gap: 28px;
+        align-items: start;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Live Wind Card</h1>
+      <p>
+        The real card, outside Home Assistant, with a simulated <code>hass</code>: sliders and presets move
+        the wind, the YAML editor drives the configuration of the three cards. The visual editor only exists
+        inside Home Assistant.
+      </p>
+    </header>
+    <main>
+      <aside>
+        <h2>Wind</h2>
+        <div class="chips" id="presets"></div>
+        <div class="row">
+          <span>Speed</span><span class="val" id="v-speed"></span
+          ><input type="range" id="in-speed" min="0" max="130" step="1" />
+        </div>
+        <div class="row">
+          <span>Gusts</span><span class="val" id="v-gust"></span
+          ><input type="range" id="in-gust" min="0" max="170" step="1" />
+        </div>
+        <div class="row">
+          <span>Coming from</span><span class="val" id="v-dir"></span
+          ><input type="range" id="in-dir" min="0" max="359" step="1" />
+        </div>
+        <label class="switch"><span>Live simulation</span><input type="checkbox" id="in-live" /></label>
+        <label class="switch"><span>Dark theme</span><input type="checkbox" id="in-dark" /></label>
+        <label class="switch"
+          ><span>Language</span
+          ><select id="in-lang" style="width: auto">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+          </select></label
+        >
+
+        <h2>Configuration</h2>
+        <div class="chips" id="examples"></div>
+        <textarea id="yaml" spellcheck="false"></textarea>
+        <div class="error" id="yaml-error"></div>
+      </aside>
+
+      <section class="gallery">
+        <figure>
+          <figcaption>Full · wide</figcaption>
+          <div style="max-width: 760px" id="card-wide"></div>
+        </figure>
+        <div class="pair">
+          <figure>
+            <figcaption>Full · phone (360 px)</figcaption>
+            <div style="width: 360px; max-width: 100%" id="card-narrow"></div>
+          </figure>
+          <figure>
+            <figcaption>Compact</figcaption>
+            <div style="width: 360px; max-width: 100%" id="card-compact"></div>
+            <div style="height: 14px"></div>
+            <figcaption>Compact · narrow (300 px)</figcaption>
+            <div style="width: 300px; max-width: 100%" id="card-compact-narrow"></div>
+          </figure>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

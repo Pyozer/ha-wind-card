@@ -1,0 +1,6 @@
+{
+  "name": "Live Wind Card",
+  "filename": "live-wind-card.js",
+  "render_readme": true,
+  "homeassistant": "2024.8.0"
+}

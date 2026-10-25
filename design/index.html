@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wind Card · maquette de design</title>
+<style>
+  :root {
+    --page-bg: #f2f2f7;
+    --page-text: #1c1c1e;
+    --page-muted: #8e8e93;
+    --page-panel: #ffffff;
+    --page-line: rgba(60, 60, 67, 0.14);
+    --page-accent: #007aff;
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    --page-bg: #000000;
+    --page-text: #f5f5f7;
+    --page-muted: #98989d;
+    --page-panel: #1c1c1e;
+    --page-line: rgba(255, 255, 255, 0.14);
+    --page-accent: #0a84ff;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--page-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease;
+  }
+
+  /* ───────────────────────── Page chrome (not part of the card) ───────────────────────── */
+  .page-head { padding: 28px 28px 8px; max-width: 1280px; margin: 0 auto; }
+  .page-head h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+  .page-head p { margin: 6px 0 0; color: var(--page-muted); font-size: 14px; max-width: 760px; line-height: 1.45; }
+  .layout {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 24px;
+    padding: 20px 28px 60px;
+    max-width: 1280px;
+    margin: 0 auto;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; padding: 16px; } .page-head { padding: 20px 16px 0; } }
+  .panel { background: var(--page-panel); border-radius: 16px; padding: 16px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+  @media (max-width: 900px) { .panel { position: static; max-height: none; } }
+  .panel h2 { margin: 18px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--page-muted); font-weight: 600; }
+  .panel h2:first-child { margin-top: 0; }
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; margin: 10px 0; font-size: 14px; }
+  .row .val { color: var(--page-muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .row input[type='range'] { grid-column: 1 / -1; width: 100%; accent-color: var(--page-accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip, .btn { border: 0; background: color-mix(in srgb, var(--page-text) 7%, transparent); color: var(--page-text); font: inherit; font-size: 13px; padding: 7px 11px; border-radius: 999px; cursor: pointer; transition: background-color 0.2s; }
+  .chip:hover, .btn:hover { background: color-mix(in srgb, var(--page-text) 12%, transparent); }
+  .chip.on { background: var(--page-accent); color: #fff; }
+  .switch { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 14px; gap: 10px; }
+  .switch input { appearance: none; width: 42px; height: 26px; background: color-mix(in srgb, var(--page-text) 18%, transparent); border-radius: 999px; position: relative; cursor: pointer; transition: background-color 0.2s; flex: none; }
+  .switch input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform 0.2s; }
+  .switch input:checked { background: #34c759; }
+  .switch input:checked::after { transform: translateX(16px); }
+  .field { margin: 10px 0; font-size: 13px; }
+  .field > label { display: block; color: var(--page-muted); margin-bottom: 4px; font-size: 12px; }
+  .field select, .field input[type='text'], .field .fake {
+    width: 100%; font: inherit; font-size: 14px; padding: 9px 10px; border-radius: 10px; border: 0;
+    background: color-mix(in srgb, var(--page-text) 6%, transparent); color: var(--page-text);
+  }
+  .field .fake { display: flex; align-items: center; gap: 8px; color: var(--page-muted); }
+  .field .fake b { color: var(--page-text); font-weight: 500; }
+  .editor-note { font-size: 12px; color: var(--page-muted); line-height: 1.4; margin-top: 8px; }
+
+  .gallery { display: grid; gap: 28px; min-width: 0; }
+  .gallery figure { margin: 0; }
+  .gallery figcaption { font-size: 12px; color: var(--page-muted); margin: 0 4px 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .gallery figcaption span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .row-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 380px)); gap: 28px; align-items: start; }
+
+  /* ───────────────────────── The card ───────────────────────── */
+  .wc {
+    --wc-surface: #ffffff;
+    --wc-text: #1c1c1e;
+    --wc-muted: #8e8e93;
+    --wc-accent: #007aff;
+    --wc-north: #ff3b30;
+    --wc-fill: color-mix(in srgb, var(--wc-text) 4.5%, var(--wc-surface));
+    --wc-fill-strong: color-mix(in srgb, var(--wc-text) 8%, transparent);
+    --wc-track: color-mix(in srgb, var(--wc-text) 9%, transparent);
+    --wc-tick: color-mix(in srgb, var(--wc-text) 22%, transparent);
+    --wc-ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --wc-c: #34c759; /* color of the current wind force, set from JS */
+    container-type: inline-size;
+    container-name: wc;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    color: var(--wc-text);
+  }
+  :root[data-theme='dark'] .wc {
+    --wc-surface: #1c1c1e;
+    --wc-text: #f5f5f7;
+    --wc-muted: #98989d;
+    --wc-accent: #0a84ff;
+    --wc-north: #ff453a;
+    --wc-fill: color-mix(in srgb, var(--wc-text) 7%, var(--wc-surface));
+    --wc-fill-strong: color-mix(in srgb, var(--wc-text) 12%, transparent);
+    --wc-track: color-mix(in srgb, var(--wc-text) 12%, transparent);
+    --wc-tick: color-mix(in srgb, var(--wc-text) 28%, transparent);
+  }
+  .wc-card {
+    background: var(--wc-surface);
+    border-radius: 18px;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 24px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease;
+    overflow: hidden;
+  }
+  :root[data-theme='dark'] .wc-card { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+
+  .wc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .wc-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .wc-sub { font-size: 12px; color: var(--wc-muted); margin-top: 2px; }
+  .wc-force {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+    padding: 5px 10px 5px 8px; border-radius: 999px; white-space: nowrap;
+    color: var(--wc-c);
+    background: color-mix(in srgb, var(--wc-c) 14%, transparent);
+    transition: color 0.5s var(--wc-ease), background-color 0.5s var(--wc-ease);
+  }
+  .wc-force i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: block; }
+
+  .wc-body { display: grid; gap: 18px; grid-template-columns: 1fr; justify-items: center; }
+  @container wc (min-width: 560px) {
+    .wc-body { grid-template-columns: 250px minmax(0, 1fr); justify-items: stretch; align-items: center; gap: 24px; }
+  }
+
+  /* Dial */
+  .wc-dial { position: relative; width: min(100%, 270px); aspect-ratio: 1; container-type: inline-size; container-name: dial; }
+  .wc-dial svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .wc-dial canvas {
+    position: absolute; left: 50%; top: 50%; width: 55%; height: 55%; transform: translate(-50%, -50%);
+    border-radius: 50%; pointer-events: none;
+    -webkit-mask-image: radial-gradient(circle, transparent 0 26%, #000 58%, #000 86%, transparent 100%);
+            mask-image: radial-gradient(circle, transparent 0 26%, #000 58%, #000 86%, transparent 100%);
+  }
+  .wc-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+  .wc-speed { font-size: 21cqw; font-weight: 700; letter-spacing: -0.04em; line-height: 0.95; font-variant-numeric: tabular-nums; }
+  .wc-unit { font-size: 6.4cqw; font-weight: 600; color: var(--wc-muted); margin-top: 1.2cqw; }
+  .wc-bname { font-size: 5cqw; color: var(--wc-c); font-weight: 600; margin-top: 2.4cqw; transition: color 0.5s var(--wc-ease); }
+
+  .wc .dial-disc { fill: var(--wc-fill); }
+  .wc .dial-tick { stroke: var(--wc-tick); stroke-width: 1.2; stroke-linecap: round; }
+  .wc .dial-tick.major { stroke-width: 1.8; }
+  .wc .dial-letter { fill: var(--wc-muted); font-size: 11.5px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+  .wc .dial-letter.n { fill: var(--wc-north); }
+  .wc .dial-dot { fill: var(--wc-tick); }
+  .wc .arc-track { stroke: var(--wc-track); fill: none; }
+  .wc .arc-speed, .wc .arc-gust { fill: none; stroke-linecap: round; transition: stroke-dasharray 0.9s var(--wc-ease), stroke 0.5s var(--wc-ease); }
+  .wc .arc-gust { opacity: 0.38; }
+  .wc .ptr { transform-origin: 120px 120px; transition: transform 1.1s var(--wc-ease), opacity 0.4s; }
+  .wc .ptr-badge { fill: var(--wc-c); transition: fill 0.5s var(--wc-ease); filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--wc-c) 45%, transparent)); }
+  .wc .ptr-arrow { fill: #fff; }
+
+  /* Side column */
+  .wc-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .wc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .wc-stat { background: var(--wc-fill); border-radius: 14px; padding: 10px 12px 11px; min-width: 0; }
+  .wc-stat .l { font-size: 11.5px; color: var(--wc-muted); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .wc-stat .l svg { width: 13px; height: 13px; flex: none; }
+  .wc-stat .v { font-size: 21px; font-weight: 650; letter-spacing: -0.02em; margin-top: 5px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wc-stat .v small { font-size: 11.5px; font-weight: 600; color: var(--wc-muted); margin-left: 2px; letter-spacing: 0; }
+  .wc-stat .s { font-size: 11.5px; color: var(--wc-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .wc-bft { display: flex; flex-direction: column; gap: 7px; }
+  .wc-bft .top { display: flex; justify-content: space-between; font-size: 12px; color: var(--wc-muted); }
+  .wc-bft .top b { color: var(--wc-text); font-weight: 600; }
+  .wc-bar { position: relative; display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px; height: 8px; }
+  .wc-bar span { border-radius: 4px; opacity: 0.28; transition: opacity 0.4s; }
+  .wc-bar span.on { opacity: 1; }
+  .wc-bar .mark { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--wc-surface); border: 3px solid var(--wc-c); box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: left 0.9s var(--wc-ease), border-color 0.5s var(--wc-ease); background-clip: padding-box; }
+  .wc-bft .ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--wc-muted); font-variant-numeric: tabular-nums; }
+
+  /* History */
+  .wc-hist { display: flex; flex-direction: column; gap: 10px; }
+  .wc-hist .hh { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .wc-hist .hh .t { font-size: 13px; font-weight: 600; }
+  .wc-hist .hh .legend { font-size: 11.5px; color: var(--wc-muted); display: flex; gap: 10px; margin-top: 2px; }
+  .wc-hist .hh .legend i { display: inline-block; width: 12px; height: 0; border-top: 2px solid var(--wc-c); vertical-align: middle; margin-right: 4px; }
+  .wc-hist .hh .legend i.g { border-top: 2px dashed var(--wc-muted); }
+  .wc-seg { display: inline-grid; grid-auto-flow: column; background: var(--wc-fill-strong); border-radius: 9px; padding: 2px; position: relative; flex: none; }
+  .wc-seg button { position: relative; z-index: 1; border: 0; background: none; color: var(--wc-muted); font: inherit; font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: 7px; cursor: pointer; transition: color 0.25s; }
+  .wc-seg button.on { color: var(--wc-text); }
+  .wc-seg .thumb { position: absolute; top: 2px; bottom: 2px; left: 2px; border-radius: 7px; background: var(--wc-surface); box-shadow: 0 1px 3px rgba(0,0,0,.18), 0 0 0 0.5px rgba(0,0,0,.04); transition: transform 0.35s var(--wc-ease), width 0.35s var(--wc-ease); }
+  :root[data-theme='dark'] .wc-seg .thumb { background: color-mix(in srgb, var(--wc-text) 20%, var(--wc-surface)); }
+  .wc-chart { position: relative; width: 100%; touch-action: pan-y; }
+  .wc-chart svg { display: block; width: 100%; overflow: visible; }
+  .wc-chart .grid { stroke: var(--wc-track); stroke-width: 1; stroke-dasharray: 2 4; }
+  .wc-chart .ax { fill: var(--wc-muted); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+  .wc-chart .gustline { fill: none; stroke: var(--wc-muted); stroke-width: 1.3; stroke-dasharray: 3 4; opacity: 0.8; stroke-linecap: round; }
+  .wc-chart .spdline { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .wc-chart .cursor { stroke: var(--wc-muted); stroke-width: 1; opacity: 0; transition: opacity 0.15s; }
+  .wc-chart .cdot { opacity: 0; transition: opacity 0.15s; stroke: var(--wc-surface); stroke-width: 2.5; }
+  .wc-chart.scrub .cursor, .wc-chart.scrub .cdot { opacity: 1; }
+  .wc-tip {
+    position: absolute; top: -6px; pointer-events: none; opacity: 0; transform: translate(-50%, -100%);
+    background: color-mix(in srgb, var(--wc-surface) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: 12px; padding: 8px 11px; font-size: 12px; line-height: 1.35; white-space: nowrap;
+    box-shadow: 0 4px 18px rgba(0,0,0,.16), 0 0 0 0.5px rgba(0,0,0,.06); transition: opacity 0.15s; z-index: 3;
+  }
+  .wc-tip b { font-weight: 650; font-size: 13px; }
+  .wc-tip .m { color: var(--wc-muted); }
+  .wc-chart.scrub .wc-tip { opacity: 1; }
+
+  /* Compact layout */
+  .wc-compact { flex-direction: row; align-items: center; gap: 14px; padding: 14px 16px; }
+  .wc-compact .wc-mini { width: 84px; height: 84px; flex: none; position: relative; }
+  .wc-compact .wc-mini svg { width: 100%; height: 100%; overflow: visible; }
+  .wc-compact .cmain { flex: 1; min-width: 0; }
+  .wc-compact .ct { font-size: 12px; color: var(--wc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wc-compact .cs { font-size: 34px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .wc-compact .cs small { font-size: 14px; font-weight: 600; color: var(--wc-muted); letter-spacing: 0; margin-left: 3px; }
+  .wc-compact .cb { font-size: 12.5px; font-weight: 600; color: var(--wc-c); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.5s var(--wc-ease); }
+  .wc-compact .cb span { color: var(--wc-muted); font-weight: 400; }
+  .wc-compact .spark { width: 76px; height: 48px; flex: none; }
+  @container wc (max-width: 330px) { .wc-compact .spark { display: none; } }
+  .wc-mini .carrow { transform-origin: 50px 50px; transition: transform 1.1s var(--wc-ease), opacity 0.4s; }
+  .wc-mini .ptr { transform-origin: 50px 50px; }
+
+  /* States */
+  .wc-card.is-unavailable .wc-speed, .wc-card.is-unavailable .cs { color: var(--wc-muted); }
+  .wc-card.is-unavailable .ptr, .wc-card.is-unavailable .carrow { opacity: 0; }
+  .wc-card.is-unavailable .wc-hist, .wc-card.is-unavailable .wc-stats, .wc-card.is-unavailable .wc-bft { opacity: 0.35; filter: grayscale(1); }
+  .wc-card.is-unavailable .wc-force { color: var(--wc-muted); background: var(--wc-fill-strong); }
+  .wc-card.no-gust .gust-only { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .wc * { transition-duration: 0.01ms !important; }
+  }
+  .wc.no-anim * { transition: none !important; }
+</style>
+</head>
+<body>
+<header class="page-head">
+  <h1>Wind Card · maquette de design</h1>
+  <p>
+    Maquette autonome avec des données simulées, pour valider le look avant de créer l'intégration.
+    Joue avec les curseurs, les préréglages et le faux éditeur : les cartes se mettent à jour en direct.
+    Survole ou fais glisser le doigt sur le graphique pour explorer l'historique.
+  </p>
+</header>
+
+<main class="layout">
+  <aside class="panel" id="panel">
+    <h2>Simulation</h2>
+    <div class="chips" id="presets"></div>
+    <div class="row"><span>Vitesse</span><span class="val" id="v-speed"></span><input type="range" id="in-speed" min="0" max="130" step="1" /></div>
+    <div class="row"><span>Rafales</span><span class="val" id="v-gust"></span><input type="range" id="in-gust" min="0" max="170" step="1" /></div>
+    <div class="row"><span>Provenance</span><span class="val" id="v-dir"></span><input type="range" id="in-dir" min="0" max="359" step="1" /></div>
+    <label class="switch"><span>Simulation en direct</span><input type="checkbox" id="in-live" /></label>
+    <label class="switch"><span>Mode sombre</span><input type="checkbox" id="in-dark" /></label>
+
+    <h2>Éditeur de la carte (aperçu)</h2>
+    <div class="field"><label>Entité météo (raccourci)</label><div class="fake"><span>🌤</span><b>weather.home</b></div></div>
+    <div class="editor-note" style="margin:-4px 0 10px">Renseigne vitesse, rafales et direction d'un coup (attributs <code>wind_speed</code>, <code>wind_gust_speed</code>, <code>wind_bearing</code>). Chaque valeur peut être remplacée par une entité dédiée.</div>
+    <div class="field"><label>Entité vitesse (optionnel si météo)</label><div class="fake"><b>sensor.home_wind_speed</b></div></div>
+    <div class="field"><label>Entité rafales</label><div class="fake"><b>sensor.home_wind_gust</b></div></div>
+    <div class="field"><label>Entité direction (+ attribut)</label><div class="fake"><b>weather…</b> <span>· wind_bearing</span></div></div>
+    <div class="field"><label>Titre</label><input type="text" id="o-title" value="Vent" /></div>
+    <div class="field"><label>Unité d'affichage</label>
+      <select id="o-unit"><option value="kmh">km/h</option><option value="ms">m/s</option><option value="kn">nœuds</option><option value="mph">mph</option><option value="bft">Beaufort</option></select></div>
+    <div class="field"><label>Flèche</label>
+      <select id="o-arrow"><option value="to">Vers où souffle le vent</option><option value="from">D'où vient le vent</option></select></div>
+    <div class="field"><label>Lettres de la boussole</label>
+      <select id="o-letters"><option value="NESO">N E S O (français)</option><option value="NESW">N E S W (anglais)</option></select></div>
+    <div class="field"><label>Couleurs</label>
+      <select id="o-color"><option value="bft">Selon la force Beaufort</option><option value="accent">Couleur unique (accent)</option></select></div>
+    <div class="field"><label>Échelle maximale du cadran</label>
+      <select id="o-max"><option value="60">60 km/h</option><option value="100" selected>100 km/h</option><option value="150">150 km/h</option></select></div>
+    <label class="switch"><span>Rafales</span><input type="checkbox" id="o-gust" checked /></label>
+    <label class="switch"><span>Échelle de Beaufort</span><input type="checkbox" id="o-bft" checked /></label>
+    <label class="switch"><span>Historique</span><input type="checkbox" id="o-hist" checked /></label>
+    <label class="switch"><span>Flèches de direction (historique)</span><input type="checkbox" id="o-harrows" checked /></label>
+    <label class="switch"><span>Animation du vent (particules)</span><input type="checkbox" id="o-part" checked /></label>
+    <div class="editor-note">Tout ceci sera configurable depuis l'interface Home Assistant (éditeur visuel basé sur <code>ha-form</code>), comme pour Live Energy Card.</div>
+  </aside>
+
+  <section class="gallery">
+    <figure>
+      <figcaption>Carte complète <span>· largeur confortable (tablette, desktop)</span></figcaption>
+      <div style="max-width: 760px"><div class="wc" id="card-wide"></div></div>
+    </figure>
+    <div class="row-2">
+      <figure>
+        <figcaption>Carte complète <span>· mobile (360 px)</span></figcaption>
+        <div style="width: 360px; max-width: 100%"><div class="wc" id="card-narrow"></div></div>
+      </figure>
+      <figure>
+        <figcaption>Carte compacte <span>· une ligne</span></figcaption>
+        <div style="width: 360px; max-width: 100%"><div class="wc" id="card-compact"></div></div>
+        <div style="height:14px"></div>
+        <figcaption>Compacte <span>· étroite (300 px)</span></figcaption>
+        <div style="width: 300px; max-width: 100%"><div class="wc" id="card-compact2"></div></div>
+      </figure>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ─────────────── Wind maths ─────────────── */
+  const LIMITS = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118]; // km/h, upper bounds of Beaufort 0…11
+  const BFT_NAMES = ['Calme', 'Très légère brise', 'Légère brise', 'Petite brise', 'Jolie brise', 'Bonne brise', 'Vent frais', 'Grand frais', 'Coup de vent', 'Fort coup de vent', 'Tempête', 'Violente tempête', 'Ouragan'];
+  const BFT_COLORS = ['#9aa7b8', '#5ac8fa', '#32d2c8', '#30d59a', '#34c759', '#a4cc3a', '#ffcc00', '#ff9f0a', '#ff7a1a', '#ff3b30', '#d6205a', '#af52de', '#8a3ffc'];
+  const forceOf = (kmh) => { const i = LIMITS.findIndex((l) => kmh < l); return i === -1 ? 12 : i; };
+  const LOWER = [0, ...LIMITS]; // lower bound of each force
+  const POINT_NAMES = {
+    NESO: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
+    NESW: ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
+  };
+  const POINT_FULL = ['Nord','Nord-nord-est','Nord-est','Est-nord-est','Est','Est-sud-est','Sud-est','Sud-sud-est','Sud','Sud-sud-ouest','Sud-ouest','Ouest-sud-ouest','Ouest','Ouest-nord-ouest','Nord-ouest','Nord-nord-ouest'];
+  const pointIdx = (deg) => Math.round((((deg % 360) + 360) % 360) / 22.5) % 16;
+  const UNITS = {
+    kmh: { label: 'km/h', conv: (v) => v, dec: 0 },
+    ms: { label: 'm/s', conv: (v) => v / 3.6, dec: 1 },
+    kn: { label: 'nds', conv: (v) => v / 1.852, dec: 0 },
+    mph: { label: 'mph', conv: (v) => v / 1.609344, dec: 0 },
+    bft: { label: 'Bft', conv: (v) => forceOf(v), dec: 0 },
+  };
+  const fmt = (n, dec = 0) => n.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const NS = 'http://www.w3.org/2000/svg';
+
+  /* ─────────────── State & mock history ─────────────── */
+  const state = { speed: 25, gust: 50, dir: 280, available: true };
+  const opts = { title: 'Vent', unit: 'kmh', arrow: 'to', letters: 'NESO', color: 'bft', max: 100, gust: true, bft: true, hist: true, harrows: true, particles: true, period: 12 };
+  const STEP_MIN = 5;
+  const N_POINTS = (24 * 60) / STEP_MIN + 1; // 24 h
+  let history = [];
+
+  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+  function makeHistory(speed, gust, dir, seed = 7) {
+    const r = rng(seed);
+    const base = Math.max(speed * 0.8, 5);
+    // Smoothed noise: a few random values per hour, linearly interpolated (so no jagged curve).
+    const knots = Array.from({ length: 24 * 4 + 2 }, () => r());
+    const noise = (x) => { const k = x * (knots.length - 2); const i = Math.floor(k); const f = k - i; return knots[i] * (1 - f) + knots[i + 1] * f; };
+    const out = [];
+    for (let i = 0; i < N_POINTS; i++) {
+      const x = i / (N_POINTS - 1); // 0 = 24 h ago, 1 = now
+      const shape = 1 + 0.4 * Math.sin(x * 9 + 1.2) + 0.2 * Math.sin(x * 21 + 0.4) + (noise(x) - 0.5) * 0.34;
+      const blend = clamp((x - 0.93) / 0.07, 0, 1); // glue the end to the current values
+      let s = Math.max(0, base * shape);
+      s = s * (1 - blend) + speed * blend;
+      const gf = 1.25 + noise((x * 1.7 + 0.31) % 1) * 0.35;
+      let g = Math.max(s, s * gf + 2);
+      g = g * (1 - blend) + Math.max(gust, speed) * blend;
+      let d = dir + 55 * Math.sin(x * 6.5 + 0.8) + 18 * Math.sin(x * 17) + (noise((x * 2.3 + 0.6) % 1) - 0.5) * 20;
+      d = d * (1 - blend) + dir * blend;
+      out.push({ s, g, d: ((d % 360) + 360) % 360 });
+    }
+    return out;
+  }
+  history = makeHistory(state.speed, state.gust, state.dir);
+
+  /* ─────────────── Helpers: SVG ─────────────── */
+  const el = (name, attrs = {}, parent) => {
+    const n = document.createElementNS(NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const polar = (cx, cy, r, deg) => [cx + r * Math.sin((deg * Math.PI) / 180), cy - r * Math.cos((deg * Math.PI) / 180)];
+  const colorFor = (kmh) => (opts.color === 'accent' ? 'var(--wc-accent)' : BFT_COLORS[forceOf(kmh)]);
+  const colorForRaw = (kmh) => (opts.color === 'accent' ? (document.documentElement.dataset.theme === 'dark' ? '#0a84ff' : '#007aff') : BFT_COLORS[forceOf(kmh)]);
+  const fracOf = (kmh) => clamp(Math.pow(Math.max(kmh, 0) / opts.max, 0.62), 0, 1);
+
+  // d3-style monotone cubic interpolation, to draw the speed curve without overshoot.
+  function monotone(pts) {
+    const n = pts.length;
+    if (n < 2) return '';
+    const dx = [], m = [], t = new Array(n);
+    for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; m[i] = (pts[i + 1][1] - pts[i][1]) / (dx[i] || 1); }
+    t[0] = m[0]; t[n - 1] = m[n - 2];
+    for (let i = 1; i < n - 1; i++) {
+      t[i] = m[i - 1] * m[i] <= 0 ? 0 : (3 * (dx[i - 1] + dx[i])) / ((2 * dx[i] + dx[i - 1]) / m[i - 1] + (dx[i] + 2 * dx[i - 1]) / m[i]);
+    }
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < n - 1; i++) {
+      const h = dx[i] / 3;
+      d += `C${(pts[i][0] + h).toFixed(1)},${(pts[i][1] + t[i] * h).toFixed(1)} ${(pts[i + 1][0] - h).toFixed(1)},${(pts[i + 1][1] - t[i + 1] * h).toFixed(1)} ${pts[i + 1][0].toFixed(1)},${pts[i + 1][1].toFixed(1)}`;
+    }
+    return d;
+  }
+
+  /* ─────────────── Wind streaks (canvas) ─────────────── */
+  class Streaks {
+    constructor(canvas) {
+      this.c = canvas; this.ctx = canvas.getContext('2d');
+      this.p = []; this.params = { from: 0, speed: 0, color: '#34c759', on: true };
+      this.last = 0; this.raf = 0; this.visible = true; this.dpr = 1;
+      this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      new ResizeObserver(() => this.resize()).observe(canvas);
+      new IntersectionObserver((e) => { this.visible = e[0].isIntersecting; this.kick(); }).observe(canvas);
+      this.resize();
+    }
+    resize() {
+      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = this.c.clientWidth, h = this.c.clientHeight;
+      this.c.width = Math.max(1, Math.round(w * this.dpr)); this.c.height = Math.max(1, Math.round(h * this.dpr));
+      this.draw(0);
+    }
+    set(params) {
+      Object.assign(this.params, params);
+      const want = this.params.on && this.params.speed >= 0.5 ? Math.round(9 + Math.min(this.params.speed, 90) * 0.42) : 0;
+      while (this.p.length < want) this.p.push({ u: Math.random() * 2.4 - 1.2, v: Math.random() * 2 - 1, k: 0.75 + Math.random() * 0.6, l: 0.7 + Math.random() * 0.7 });
+      this.p.length = Math.min(this.p.length, want);
+      this.kick();
+    }
+    kick() {
+      if (this.raf || !this.visible) return;
+      this.last = performance.now();
+      this.raf = requestAnimationFrame((t) => this.tick(t));
+    }
+    tick(t) {
+      this.raf = 0;
+      const dt = Math.min((t - this.last) / 1000, 0.05); this.last = t;
+      this.draw(this.reduced ? 0 : dt);
+      if (this.visible && !this.reduced && this.p.length) this.raf = requestAnimationFrame((n) => this.tick(n));
+    }
+    draw(dt) {
+      const { ctx, c } = this; const W = c.width, H = c.height; ctx.clearRect(0, 0, W, H);
+      if (!this.p.length) return;
+      const to = ((this.params.from + 180) * Math.PI) / 180;
+      const dx = Math.sin(to), dy = -Math.cos(to); const px = -dy, py = dx; // direction and its normal
+      const R = W / 2, speed = this.params.speed;
+      const vel = 0.55 + speed / 38; // radius per second
+      const len = clamp(0.1 + speed / 220, 0.1, 0.5);
+      ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1.6, W * 0.012);
+      ctx.strokeStyle = this.params.color;
+      for (const p of this.p) {
+        p.u += vel * p.k * dt;
+        if (p.u > 1.25) { p.u = -1.25; p.v = Math.random() * 2 - 1; p.k = 0.75 + Math.random() * 0.6; p.l = 0.7 + Math.random() * 0.7; }
+        const e = 1 - Math.abs(p.u) / 1.25; const a = clamp(e * 2.2, 0, 1) * 0.85;
+        const x = R + R * (p.u * dx + p.v * 0.92 * px), y = R + R * (p.u * dy + p.v * 0.92 * py);
+        const L = len * p.l * R;
+        ctx.globalAlpha = a;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - dx * L, y - dy * L); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ─────────────── Icons ─────────────── */
+  const ICON_GUST = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h6"/></svg>';
+  const ICON_DIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>';
+  const ICON_MAX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 10 11l4 4 6-8"/><path d="M15 7h5v5"/></svg>';
+  const ARROW_DOWN = 'M0 5.2 L-4.8 -1.6 L-1.7 -1.6 L-1.7 -5.2 L1.7 -5.2 L1.7 -1.6 L4.8 -1.6 Z';
+
+  /* ─────────────── The card ─────────────── */
+  let uid = 0;
+  class WindCard {
+    constructor(root, layout) {
+      this.root = root; this.layout = layout; this.id = ++uid;
+      this.rot = 0; this.crot = 0;
+      layout === 'compact' ? this.buildCompact() : this.buildFull();
+      new ResizeObserver(() => this.drawChart()).observe(this.root);
+    }
+
+    /* — Full layout — */
+    buildFull() {
+      this.root.innerHTML = `
+      <div class="wc-card">
+        <div class="wc-head">
+          <div><div class="wc-title"></div><div class="wc-sub">Home · il y a 2 min</div></div>
+          <div class="wc-force"><i></i><span class="f-text"></span></div>
+        </div>
+        <div class="wc-body">
+          <div class="wc-dial">
+            <svg class="ring" viewBox="0 0 240 240"></svg>
+            <canvas></canvas>
+            <div class="wc-center"><div class="wc-speed">–</div><div class="wc-unit"></div><div class="wc-bname"></div></div>
+          </div>
+          <div class="wc-side">
+            <div class="wc-stats">
+              <div class="wc-stat gust-only"><div class="l">${ICON_GUST}Rafales</div><div class="v s-gust"></div><div class="s s-gust-sub"></div></div>
+              <div class="wc-stat"><div class="l">${ICON_DIR}Provenance</div><div class="v s-dir"></div><div class="s s-dir-sub"></div></div>
+              <div class="wc-stat"><div class="l">${ICON_MAX}Max · <span class="s-per">12 h</span></div><div class="v s-max"></div><div class="s s-max-sub"></div></div>
+            </div>
+            <div class="wc-bft">
+              <div class="top"><span>Échelle de Beaufort</span><span><b class="b-num"></b> / 12</span></div>
+              <div class="wc-bar"><div class="mark"></div></div>
+              <div class="ticks"><span>0</span><span>3</span><span>6</span><span>9</span><span>12</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="wc-hist">
+          <div class="hh">
+            <div><div class="t">Historique</div><div class="legend"><span><i></i>Vitesse</span><span class="gust-only"><i class="g"></i>Rafales</span></div></div>
+            <div class="wc-seg"><div class="thumb"></div><button data-p="3">3 h</button><button data-p="12">12 h</button><button data-p="24">24 h</button></div>
+          </div>
+          <div class="wc-chart"><svg></svg><div class="wc-tip"></div></div>
+        </div>
+      </div>`;
+      const $ = (s) => this.root.querySelector(s);
+      this.card = $('.wc-card'); this.titleEl = $('.wc-title');
+      this.fText = $('.f-text'); this.speedEl = $('.wc-speed'); this.unitEl = $('.wc-unit'); this.bnameEl = $('.wc-bname');
+      this.ring = $('svg.ring'); this.streaks = new Streaks($('.wc-dial canvas'));
+      this.sGust = $('.s-gust'); this.sGustSub = $('.s-gust-sub'); this.sDir = $('.s-dir'); this.sDirSub = $('.s-dir-sub');
+      this.sMax = $('.s-max'); this.sMaxSub = $('.s-max-sub'); this.sPer = $('.s-per');
+      this.bar = $('.wc-bar'); this.mark = $('.mark'); this.bNum = $('.b-num');
+      this.segEl = $('.wc-seg'); this.thumb = $('.thumb'); this.chartWrap = $('.wc-chart'); this.chartSvg = $('.wc-chart svg'); this.tip = $('.wc-tip');
+      this.histEl = $('.wc-hist'); this.bftEl = $('.wc-bft');
+      for (let i = 0; i < 13; i++) { const s = document.createElement('span'); s.style.background = BFT_COLORS[i]; this.bar.insertBefore(s, this.mark); }
+      this.segEl.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; opts.period = +b.dataset.p; renderAll(); });
+      this.buildRing();
+      this.bindScrub();
+    }
+
+    buildRing() {
+      const svg = this.ring; svg.innerHTML = '';
+      el('circle', { class: 'dial-disc', cx: 120, cy: 120, r: 118 }, svg);
+      for (let a = 0; a < 360; a += 10) {
+        const major = a % 90 === 0;
+        const [x1, y1] = polar(120, 120, major ? 104 : 106.5, a); const [x2, y2] = polar(120, 120, 110.5, a);
+        el('line', { class: 'dial-tick' + (major ? ' major' : ''), x1, y1, x2, y2 }, svg);
+      }
+      this.letters = [];
+      [0, 1, 2, 3].forEach((i) => {
+        const [x, y] = polar(120, 120, 93, i * 90);
+        const t = el('text', { class: 'dial-letter' + (i === 0 ? ' n' : ''), x, y }, svg); this.letters.push(t);
+      });
+      [45, 135, 225, 315].forEach((a) => { const [x, y] = polar(120, 120, 93, a); el('circle', { class: 'dial-dot', cx: x, cy: y, r: 1.6 }, svg); });
+      el('circle', { class: 'arc-track', cx: 120, cy: 120, r: 76, 'stroke-width': 7 }, svg);
+      const mk = (cls) => el('circle', { class: cls, cx: 120, cy: 120, r: 76, 'stroke-width': 7, pathLength: 100, transform: 'rotate(-90 120 120)', 'stroke-dasharray': '0 100' }, svg);
+      this.arcGust = mk('arc-gust'); this.arcSpeed = mk('arc-speed');
+      this.ptr = el('g', { class: 'ptr' }, svg);
+      const g = el('g', { transform: 'translate(120 11)' }, this.ptr);
+      el('circle', { class: 'ptr-badge', r: 11 }, g);
+      this.ptrArrow = el('path', { class: 'ptr-arrow', d: ARROW_DOWN }, g);
+    }
+
+    /* — Compact layout — */
+    buildCompact() {
+      this.root.innerHTML = `
+      <div class="wc-card wc-compact">
+        <div class="wc-mini"><svg viewBox="0 0 100 100"></svg></div>
+        <div class="cmain"><div class="ct"></div><div class="cs"></div><div class="cb"></div></div>
+        <svg class="spark" viewBox="0 0 96 52" preserveAspectRatio="none"></svg>
+      </div>`;
+      const $ = (s) => this.root.querySelector(s);
+      this.card = $('.wc-card'); this.mini = $('.wc-mini svg'); this.ct = $('.ct'); this.cs = $('.cs'); this.cb = $('.cb'); this.spark = $('.spark');
+      const svg = this.mini;
+      el('circle', { class: 'dial-disc', cx: 50, cy: 50, r: 48 }, svg);
+      el('circle', { class: 'arc-track', cx: 50, cy: 50, r: 36, 'stroke-width': 5 }, svg);
+      this.carc = el('circle', { class: 'arc-speed', cx: 50, cy: 50, r: 36, 'stroke-width': 5, pathLength: 100, transform: 'rotate(-90 50 50)', 'stroke-dasharray': '0 100' }, svg);
+      this.cpoint = el('g', { class: 'ptr' }, svg);
+      const bg = el('g', { transform: 'translate(50 7)' }, this.cpoint);
+      el('circle', { class: 'ptr-badge', r: 6 }, bg);
+      el('path', { class: 'ptr-arrow', d: ARROW_DOWN, transform: 'scale(0.55)' }, bg);
+      this.carrow = el('g', { class: 'carrow' }, svg);
+      el('path', { d: 'M50 30 L38 50 L46 50 L46 69 L54 69 L54 50 L62 50 Z', fill: 'var(--wc-c)', style: 'transition: fill .5s' }, this.carrow);
+    }
+
+    /* — Update — */
+    setRot(prop, target) { // shortest-path rotation, without a spin when crossing 0°/360°
+      const d = ((target - this[prop] + 540) % 360) - 180; this[prop] += d; return this[prop];
+    }
+
+    update() {
+      const u = UNITS[opts.unit]; const s = state; const av = s.available;
+      const f = forceOf(s.speed); const col = colorFor(s.speed);
+      this.root.style.setProperty('--wc-c', col);
+      this.card.classList.toggle('is-unavailable', !av);
+      this.card.classList.toggle('no-gust', !opts.gust);
+      const toDir = (s.dir + 180) % 360; const pointName = POINT_NAMES[opts.letters][pointIdx(s.dir)];
+      const showV = (v) => (av ? fmt(u.conv(v), u.dec) : '–');
+      const fromDeg = s.dir;
+
+      if (this.layout === 'compact') {
+        this.ct.textContent = `${opts.title} · ${av ? POINT_FULL[pointIdx(s.dir)] : 'indisponible'}`;
+        this.cs.innerHTML = `${showV(s.speed)}<small>${u.label}</small>`;
+        this.cb.innerHTML = av ? `${BFT_NAMES[f]}${opts.gust ? ` <span>· raf. ${fmt(u.conv(s.gust), u.dec)}</span>` : ''}` : 'Capteur indisponible';
+        this.carc.setAttribute('stroke-dasharray', `${av ? fracOf(s.speed) * 100 : 0} 100`);
+        this.carc.style.stroke = col;
+        this.cpoint.style.transform = `rotate(${this.setRot('rot', fromDeg)}deg)`;
+        this.carrow.style.transform = `rotate(${this.setRot('crot', opts.arrow === 'to' ? toDir : fromDeg)}deg)`;
+        this.drawSpark();
+        return;
+      }
+
+      this.titleEl.textContent = opts.title;
+      this.fText.textContent = av ? `Force ${f}` : 'Indisponible';
+      this.speedEl.textContent = showV(s.speed); this.unitEl.textContent = u.label;
+      this.bnameEl.textContent = av ? BFT_NAMES[f] : 'Capteur indisponible';
+      this.letters.forEach((t, i) => { t.textContent = opts.letters[i]; });
+      this.arcSpeed.style.stroke = col; this.arcGust.style.stroke = av ? colorFor(s.gust) : col;
+      const fs = av ? fracOf(s.speed) * 100 : 0; const fg = av ? fracOf(Math.max(s.gust, s.speed)) * 100 : 0;
+      this.arcSpeed.setAttribute('stroke-dasharray', `${fs} 100`);
+      this.arcGust.setAttribute('stroke-dasharray', `${opts.gust ? fg : 0} 100`);
+      this.ptr.style.transform = `rotate(${this.setRot('rot', fromDeg)}deg)`;
+      this.ptrArrow.setAttribute('transform', opts.arrow === 'to' ? '' : 'rotate(180)');
+      this.streaks.set({ from: s.dir, speed: av ? s.speed : 0, color: colorForRaw(s.speed), on: opts.particles });
+
+      this.sGust.innerHTML = `${showV(s.gust)}<small>${u.label}</small>`;
+      this.sGustSub.textContent = av ? `Force ${forceOf(s.gust)}` : '—';
+      this.sDir.innerHTML = av ? `${pointName}<small>${Math.round(s.dir)}°</small>` : '–';
+      this.sDirSub.textContent = av ? `vers ${POINT_FULL[pointIdx(toDir)].toLowerCase()}` : '—';
+      const pts = this.periodPoints(); const mx = pts.reduce((a, p) => (p.s > a.s ? p : a), pts[0]);
+      this.sPer.textContent = `${opts.period} h`;
+      this.sMax.innerHTML = `${showV(mx.s)}<small>${u.label}</small>`;
+      this.sMaxSub.textContent = av ? `rafales ${fmt(u.conv(Math.max(...pts.map((p) => p.g))), u.dec)}` : '—';
+
+      this.bNum.textContent = av ? f : '–';
+      [...this.bar.querySelectorAll('span')].forEach((sp, i) => sp.classList.toggle('on', av && i <= f));
+      this.mark.style.left = `${((f + 0.5) / 13) * 100}%`;
+      this.mark.style.display = av ? '' : 'none';
+
+      this.bftEl.style.display = opts.bft ? '' : 'none';
+      this.histEl.style.display = opts.hist ? '' : 'none';
+      this.segEl.querySelectorAll('button').forEach((b) => b.classList.toggle('on', +b.dataset.p === opts.period));
+      const on = this.segEl.querySelector('button.on');
+      if (on) { this.thumb.style.width = on.offsetWidth + 'px'; this.thumb.style.transform = `translateX(${on.offsetLeft - 2}px)`; }
+      this.drawChart();
+    }
+
+    periodPoints() { const n = opts.period * (60 / STEP_MIN) + 1; return history.slice(history.length - n); }
+
+    /* — Sparkline (compact) — */
+    drawSpark() {
+      const pts = history.slice(history.length - 3 * 12 - 1);
+      const W = 96, H = 52, mx = Math.max(10, ...pts.map((p) => p.g));
+      const xy = pts.map((p, i) => [(i / (pts.length - 1)) * W, H - 4 - (p.s / mx) * (H - 12)]);
+      const d = monotone(xy); const gid = `sg${this.id}`; const col = colorFor(state.speed);
+      this.spark.innerHTML = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".30"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+        <path d="${d} L${W},${H} L0,${H} Z" fill="url(#${gid})"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
+    }
+
+    /* — Chart (full) — */
+    drawChart() {
+      if (this.layout === 'compact' || !opts.hist) return;
+      const svg = this.chartSvg; const W = this.chartWrap.clientWidth; if (W < 40) return;
+      const pts = this.periodPoints(); const n = pts.length;
+      const u = UNITS[opts.unit]; const av = state.available;
+      const padR = 30, padT = 8, H = 112; const cw = W - padR;
+      const showArrows = opts.harrows; const totalH = H + (showArrows ? 54 : 22);
+      svg.setAttribute('viewBox', `0 0 ${W} ${totalH}`); svg.setAttribute('height', totalH);
+      const peak = Math.max(...pts.map((p) => (opts.gust ? p.g : p.s)), 10);
+      const step = peak > 90 ? 40 : peak > 50 ? 20 : peak > 25 ? 10 : 5; const maxV = Math.ceil(peak / step) * step;
+      const X = (i) => (i / (n - 1)) * cw; const Y = (v) => padT + (1 - v / maxV) * (H - padT - 4);
+      const sp = pts.map((p, i) => [X(i), Y(p.s)]); const gp = pts.map((p, i) => [X(i), Y(p.g)]);
+      const gid = `cg${this.id}`; const stops = [];
+      if (opts.color === 'accent') { stops.push(['0', colorForRaw(1)], ['1', colorForRaw(1)]); }
+      else { LOWER.forEach((lo, f) => { if (lo <= maxV) stops.push([(lo / maxV).toFixed(3), BFT_COLORS[f]]); }); stops.push(['1', BFT_COLORS[forceOf(maxV)]]); }
+      let html = `<defs><linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="${Y(0)}" x2="0" y2="${Y(maxV)}">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>
+        <linearGradient id="${gid}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <mask id="${gid}m"><rect x="0" y="0" width="${cw}" height="${H}" fill="url(#${gid}f)"/></mask></defs>`;
+      for (const v of [0, maxV / 2, maxV]) html += `<line class="grid" x1="0" x2="${cw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${cw + 6}" y="${Y(v) + 3.5}">${fmt(u.conv(v), u.dec)}</text>`;
+      if (opts.gust) html += `<path class="gustline" d="${monotone(gp)}"/>`;
+      const d = monotone(sp);
+      html += `<path d="${d} L${cw},${Y(0)} L0,${Y(0)} Z" fill="url(#${gid})" mask="url(#${gid}m)" opacity=".45"/>`;
+      html += `<path class="spdline" d="${d}" stroke="url(#${gid})"/>`;
+      html += `<line class="cursor" y1="${padT}" y2="${Y(0)}" x1="0" x2="0"/><circle class="cdot" r="5" cx="0" cy="0"/>`;
+      // Direction arrows + time labels.
+      const count = clamp(Math.floor(cw / 46), 4, 12); const now = Date.now();
+      for (let k = 0; k < count; k++) {
+        const i = Math.round((k / (count - 1)) * (n - 1)); const x = X(i); const p = pts[i];
+        const ang = opts.arrow === 'to' ? (p.d + 180) % 360 : p.d;
+        if (showArrows) html += `<g transform="translate(${x.toFixed(1)} ${H + 14}) rotate(${ang.toFixed(0)}) scale(1.05)" opacity="${av ? 0.95 : 0.3}"><path d="M0 -6.2 L5 4 L0 1.6 L-5 4 Z" fill="${colorForRaw(p.s)}" transform="rotate(180)"/></g>`;
+        const mins = (n - 1 - i) * STEP_MIN; const t = new Date(now - mins * 60000);
+        const label = k === count - 1 ? 'Maint.' : `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+        if (k % 2 === (count - 1) % 2) html += `<text class="ax" x="${clamp(x, 14, cw - 2)}" y="${H + (showArrows ? 44 : 14)}" text-anchor="${k === 0 ? 'start' : k === count - 1 ? 'end' : 'middle'}">${label}</text>`;
+      }
+      svg.innerHTML = html;
+      this.geo = { X, Y, n, pts, cw, H, padT, now, u };
+    }
+
+    bindScrub() {
+      const wrap = this.chartWrap;
+      const move = (ev) => {
+        if (!this.geo) return; const g = this.geo; const r = wrap.getBoundingClientRect();
+        const x = clamp(ev.clientX - r.left, 0, g.cw); const i = Math.round((x / g.cw) * (g.n - 1)); const p = g.pts[i];
+        const cur = wrap.querySelector('.cursor'), dot = wrap.querySelector('.cdot');
+        const px = g.X(i); cur.setAttribute('x1', px); cur.setAttribute('x2', px);
+        dot.setAttribute('cx', px); dot.setAttribute('cy', g.Y(p.s)); dot.setAttribute('fill', colorForRaw(p.s));
+        const t = new Date(g.now - (g.n - 1 - i) * STEP_MIN * 60000); const hh = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+        const un = UNITS[opts.unit];
+        this.tip.innerHTML = `<span class="m">${i === g.n - 1 ? 'Maintenant' : hh}</span><br><b>${fmt(un.conv(p.s), un.dec)} ${un.label}</b>${opts.gust ? ` <span class="m">· rafales ${fmt(un.conv(p.g), un.dec)}</span>` : ''}<br><span class="m">${POINT_NAMES[opts.letters][pointIdx(p.d)]} · ${Math.round(p.d)}°</span>`;
+        const tw = this.tip.offsetWidth; this.tip.style.left = `${clamp(px, tw / 2, wrap.clientWidth - tw / 2)}px`;
+        wrap.classList.add('scrub');
+      };
+      wrap.addEventListener('pointermove', move);
+      wrap.addEventListener('pointerdown', move);
+      wrap.addEventListener('pointerleave', () => wrap.classList.remove('scrub'));
+      wrap.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') wrap.classList.remove('scrub'); });
+    }
+  }
+
+  /* ─────────────── Wire-up ─────────────── */
+  const cards = [
+    new WindCard(document.getElementById('card-wide'), 'full'),
+    new WindCard(document.getElementById('card-narrow'), 'full'),
+    new WindCard(document.getElementById('card-compact'), 'compact'),
+    new WindCard(document.getElementById('card-compact2'), 'compact'),
+  ];
+  const $ = (id) => document.getElementById(id);
+  function renderAll() {
+    $('in-speed').value = state.speed; $('in-gust').value = state.gust; $('in-dir').value = state.dir;
+    $('v-speed').textContent = `${state.speed} km/h · Force ${forceOf(state.speed)}`;
+    $('v-gust').textContent = `${state.gust} km/h`;
+    $('v-dir').textContent = `${Math.round(state.dir)}° · ${POINT_NAMES.NESO[pointIdx(state.dir)]}`;
+    const last = history[history.length - 1]; last.s = state.speed; last.g = Math.max(state.gust, state.speed); last.d = state.dir;
+    cards.forEach((c) => c.update());
+  }
+
+  const PRESETS = [
+    { n: 'Calme', s: 0, g: 4, d: 95 },
+    { n: 'Brise', s: 14, g: 24, d: 200 },
+    { n: 'Actuel', s: 25, g: 50, d: 280 },
+    { n: 'Grand frais', s: 55, g: 80, d: 235 },
+    { n: 'Tempête', s: 92, g: 128, d: 40 },
+    { n: 'Indisponible', na: true },
+  ];
+  const presetsEl = $('presets');
+  PRESETS.forEach((p) => {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = p.n;
+    b.onclick = () => {
+      if (p.na) { state.available = false; }
+      else { state.available = true; state.speed = p.s; state.gust = p.g; state.dir = p.d; history = makeHistory(p.s, p.g, p.d, 3 + PRESETS.indexOf(p)); }
+      presetsEl.querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c === b));
+      renderAll();
+    };
+    if (p.n === 'Actuel') b.classList.add('on');
+    presetsEl.appendChild(b);
+  });
+
+  const bind = (id, fn) => $(id).addEventListener('input', fn);
+  bind('in-speed', (e) => { state.speed = +e.target.value; state.gust = Math.max(state.gust, state.speed); state.available = true; renderAll(); });
+  bind('in-gust', (e) => { state.gust = Math.max(+e.target.value, state.speed); renderAll(); });
+  bind('in-dir', (e) => { state.dir = +e.target.value; renderAll(); });
+  $('in-dark').addEventListener('change', (e) => { document.documentElement.dataset.theme = e.target.checked ? 'dark' : 'light'; renderAll(); });
+  const optBind = (id, key, parse = (v) => v) => {
+    const node = $(id); const isBox = node.type === 'checkbox';
+    node.addEventListener(isBox ? 'change' : 'input', (e) => { opts[key] = parse(isBox ? e.target.checked : e.target.value); renderAll(); });
+  };
+  optBind('o-title', 'title'); optBind('o-unit', 'unit'); optBind('o-arrow', 'arrow'); optBind('o-letters', 'letters'); optBind('o-color', 'color');
+  optBind('o-max', 'max', Number); optBind('o-gust', 'gust'); optBind('o-bft', 'bft'); optBind('o-hist', 'hist'); optBind('o-harrows', 'harrows'); optBind('o-part', 'particles');
+
+  // Live simulation: a gentle random walk.
+  let liveTimer = 0;
+  $('in-live').addEventListener('change', (e) => {
+    clearInterval(liveTimer);
+    if (!e.target.checked) return;
+    liveTimer = setInterval(() => {
+      if (!state.available) return;
+      state.speed = clamp(Math.round(state.speed + (Math.random() - 0.5) * 6), 0, 130);
+      state.gust = clamp(Math.max(state.speed, Math.round(state.gust + (Math.random() - 0.45) * 8)), 0, 170);
+      state.dir = (state.dir + (Math.random() - 0.5) * 14 + 360) % 360;
+      renderAll();
+    }, 1600);
+  });
+
+  if (matchMedia('(prefers-color-scheme: dark)').matches) { $('in-dark').checked = true; document.documentElement.dataset.theme = 'dark'; }
+  // First paint without transitions (no dial spinning up from 0), then re-enable them.
+  cards.forEach((c) => c.root.classList.add('no-anim'));
+  renderAll();
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    renderAll(); // fonts / layout settled: redraw the charts once more
+    setTimeout(() => cards.forEach((c) => c.root.classList.remove('no-anim')), 80);
+  }));
+})();
+</script>
+</body>
+</html>
