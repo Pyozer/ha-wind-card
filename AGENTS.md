@@ -181,3 +181,7 @@ Conventional Commits, in English, concise, no `Co-authored-by`. Details in
 - **The wind rose weighs each sample by its speed.** It is a choice of design (strong winds should
   show), not a default to change lightly; a time-weighted rose was tried in the mockup and looked
   much the same on calm data. `show_beam` is off by default because it adds up with the rose.
+- **The side column must keep the full width on a narrow card.** `.body` centers its items there (for
+  the dial), so `.side` takes `width: 100%`; otherwise it shrinks to its content, and without the
+  tiles the Beaufort scale is only as wide as its labels. Check the card with and without
+  `show_stats` at 360 px.

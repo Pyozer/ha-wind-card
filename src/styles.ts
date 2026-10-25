@@ -274,6 +274,9 @@ export const cardStyles = css`
     flex-direction: column;
     gap: 14px;
     min-width: 0;
+    /* The body centers its items on a narrow card: without this, the column shrinks to its content
+       (the scale alone is only as wide as its labels) instead of taking the width of the card. */
+    width: 100%;
   }
 
   .stats {
