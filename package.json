@@ -1,6 +1,6 @@
 {
   "name": "live-wind-card",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Modern animated wind card for Home Assistant: speed, gusts, direction and history",
   "type": "module",
   "license": "MIT",
