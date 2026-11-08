@@ -13,6 +13,18 @@ neutral surfaces, with color reserved for the wind itself. The color follows the
         S        History  3 h · 12 h · 24 h  (up to 3 d)
 ```
 
+**[Try the live demo](https://pyozer.github.io/ha-wind-card/)**: the card with simulated data,
+sliders and presets for the wind, example configurations and a YAML editor. No Home Assistant needed.
+
+<p align="center">
+  <img src="docs/card-dark.png" alt="The card in dark mode, with a near gale and its wind rose" width="49%" />
+  <img src="docs/card-light.png" alt="The card in light mode, with a gentle breeze" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/card-narrow.png" alt="The card on a narrow screen, stacked" width="30%" />
+  <img src="docs/card-compact.png" alt="The compact layout, on a single line" width="49%" />
+</p>
+
 ## Features
 
 - **Compass dial** with a pointer sitting half outside the ring, an arc for the speed (the gusts in
@@ -49,24 +61,36 @@ neutral surfaces, with color reserved for the wind itself. The color follows the
 
 ## Installation
 
+### HACS (recommended)
+
+With [HACS](https://hacs.xyz), the card is installed in a few clicks, and updates are offered as new
+versions come out.
+
+1. Click the button, which opens this repository in HACS on your Home Assistant instance (it asks
+   for its address the first time):
+
+   [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pyozer&repository=ha-wind-card&category=plugin)
+
+   Or add it by hand: **HACS → ⋮ → Custom repositories**, with
+   `https://github.com/Pyozer/ha-wind-card` and the *Dashboard* type.
+2. Click **Download** on **Live Wind Card**. HACS fetches `live-wind-card.js` from the latest
+   GitHub release and registers it as a dashboard resource.
+3. Reload the page without cache (Ctrl/Cmd + Shift + R).
+4. Add the card: **Edit dashboard → Add card → Live Wind Card**.
+
 ### Manual
 
-1. Copy `dist/live-wind-card.js` to `/config/www/live-wind-card.js` (via the Samba app, File
-   editor or SSH).
+1. Download `live-wind-card.js` from the
+   [latest release](https://github.com/Pyozer/ha-wind-card/releases/latest) and copy it to
+   `/config/www/live-wind-card.js` (via the Samba app, File editor or SSH).
 2. **Settings → Dashboards → ⋮ → Resources → Add resource**:
-   - URL: `/local/live-wind-card.js?v=0.1.0`
+   - URL: `/local/live-wind-card.js?v=1` (any value: change it after each update, see below)
    - Type: *JavaScript module*
 3. Reload the page without cache (Ctrl/Cmd + Shift + R).
 4. Add the card: **Edit dashboard → Add card → Live Wind Card**.
 
 For each new version, copy the file again and increment `?v=` to bypass the browser and mobile app
 caches.
-
-### HACS (custom repository)
-
-Once the repository is published: **HACS → ⋮ → Custom repositories**, add its URL with the type
-*Dashboard*, then install **Live Wind Card**. HACS installs the `live-wind-card.js` attached to
-each release.
 
 ## Configuration
 
@@ -210,6 +234,7 @@ npm run dev     # demo outside Home Assistant: http://localhost:5173/demo/
 npm test        # unit tests
 npm run check   # lint, format, coverage, build, bundle size
 npm run build   # dist/live-wind-card.js
+npm run build:demo   # the demo page as a static site in dist-demo/
 ```
 
 See [AGENTS.md](AGENTS.md) for the architecture and conventions, and
@@ -217,4 +242,4 @@ See [AGENTS.md](AGENTS.md) for the architecture and conventions, and
 
 ## License
 
-MIT
+[MIT](LICENSE)

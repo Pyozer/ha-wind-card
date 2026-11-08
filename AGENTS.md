@@ -32,6 +32,7 @@ npm run lint          # ESLint
 npm run format        # Prettier (src, demo, test, scripts)
 npm run build         # type check + dist/live-wind-card.js
 npm run size          # bundle size against its budget (scripts/check-size.mjs)
+npm run build:demo    # the demo page as a static site in dist-demo/ (vite.demo.config.ts)
 npm run check         # lint + format:check + coverage + build + size: run before every commit
 ```
 
@@ -134,14 +135,21 @@ Every code change comes with the matching documentation update, in the same comm
   `Release` workflow checks that the tag matches `package.json`, runs `npm run check` and publishes
   a GitHub release with `live-wind-card.js` attached (what HACS installs). The release notes are
   built from the Conventional Commits since the previous tag (`scripts/release-notes.mjs`).
-- The repository is local for now: add the GitHub remote before the first release, and the
-  `hacs.json` / README URLs with it.
+- The repository is `Pyozer/ha-wind-card` on GitHub. HACS installs the card from the latest release
+  (`hacs.json`: `filename`, `render_readme`, minimum Home Assistant version), so a release with
+  `live-wind-card.js` attached must exist. The README install section puts HACS first, with the My
+  Home Assistant button, then the manual install from the latest release.
 
 ## Continuous integration
 
 - `.github/workflows/ci.yml` runs `npm run check` on every push to `main` and every pull request,
   and keeps the coverage report and the bundle as artifacts.
 - `.github/workflows/release.yml`: see above.
+- `.github/workflows/hacs.yml`: the HACS validation (`hacs/action`, category `plugin`) on every push,
+  pull request and weekly. It needs a public repository with a description, topics and a release.
+- `.github/workflows/pages.yml`: builds the demo (`npm run build:demo`) and publishes it on GitHub
+  Pages at every push to `main` (Settings → Pages → Source: GitHub Actions). The README links to it.
+- `docs/` holds the README screenshots, taken from the demo page: refresh them when the look changes.
 - Dependabot opens monthly update PRs for npm (dev dependencies grouped) and the GitHub actions.
 - The Node version is pinned in `.nvmrc`, shared by CI and local development.
 
