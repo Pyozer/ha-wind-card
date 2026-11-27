@@ -34,6 +34,7 @@ npm run build         # type check + dist/live-wind-card.js
 npm run size          # bundle size against its budget (scripts/check-size.mjs)
 npm run build:demo    # the demo page as a static site in dist-demo/ (vite.demo.config.ts)
 npm run check         # lint + format:check + coverage + build + size: run before every commit
+npm run release -- minor   # check, version bump, `chore: release` commit and tag (see Versioning)
 ```
 
 ## Architecture
@@ -131,10 +132,14 @@ Every code change comes with the matching documentation update, in the same comm
 - Manual install: copy `dist/live-wind-card.js` to `/config/www/` and change the `?v=` parameter of
   the Lovelace resource to bust the cache.
 - `dist/` is not versioned.
-- Release: bump `package.json`, commit `chore: release x.y.z`, then push a `vx.y.z` tag. The
+- Release: `npm run release -- <patch|minor|major|x.y.z>` (`preversion` runs `npm run check`, then
+  `npm version` bumps `package.json` and the lockfile, commits `chore: release x.y.z` and creates the
+  annotated tag `vx.y.z`), then `git push --follow-tags`. Never push or tag without the user's go-ahead. The
   `Release` workflow checks that the tag matches `package.json`, runs `npm run check` and publishes
   a GitHub release with `live-wind-card.js` attached (what HACS installs). The release notes are
-  built from the Conventional Commits since the previous tag (`scripts/release-notes.mjs`).
+  built from the Conventional Commits since the previous tag (`scripts/release-notes.mjs`), so a
+  commit pushed straight to `main` appears in them: write its type and summary for a user
+  (`feat`, `fix`, `perf`, `refactor`, `docs`, `build`, `ci`; `chore`, `test` and `style` are left out).
 - The repository is `Pyozer/ha-wind-card` on GitHub. HACS installs the card from the latest release
   (`hacs.json`: `filename`, `render_readme`, minimum Home Assistant version), so a release with
   `live-wind-card.js` attached must exist. The README install section puts HACS first, with the My
@@ -142,16 +147,24 @@ Every code change comes with the matching documentation update, in the same comm
 
 ## Continuous integration
 
-- `.github/workflows/ci.yml` runs `npm run check` on every push to `main` and every pull request,
-  and keeps the coverage report and the bundle as artifacts.
-- `.github/workflows/release.yml`: see above.
+- `.github/workflows/ci.yml` runs `npm run check`, `npm run build:demo`, `npm audit --audit-level=high`,
+  and validates Conventional Commit PR titles on pull requests, keeping coverage and the bundle as artifacts.
+- `.github/workflows/release.yml`: verifies the tag matches `package.json`, runs `npm run check`,
+  attaches a GitHub build provenance attestation (`actions/attest@v4`) to `dist/live-wind-card.js`,
+  and publishes the GitHub release with generated notes (`npm run release:notes -- HEAD` previews them).
 - `.github/workflows/hacs.yml`: the HACS validation (`hacs/action`, category `plugin`) on every push,
   pull request and weekly. It needs a public repository with a description, topics and a release.
 - `.github/workflows/pages.yml`: builds the demo (`npm run build:demo`) and publishes it on GitHub
-  Pages at every push to `main` (Settings → Pages → Source: GitHub Actions). The README links to it.
+  Pages on `main` pushes affecting app/demo files (Settings → Pages → Source: GitHub Actions). The README links to it.
 - `docs/` holds the README screenshots, taken from the demo page: refresh them when the look changes.
-- Dependabot opens monthly update PRs for npm (dev dependencies grouped) and the GitHub actions.
-- The Node version is pinned in `.nvmrc`, shared by CI and local development.
+- `.github/ISSUE_TEMPLATE/` (`bug_report.yml`, `feature_request.yml`, `config.yml`),
+  `.github/PULL_REQUEST_TEMPLATE.md` and `SECURITY.md` handle community reports and contributions.
+- Dependabot opens monthly update PRs for npm (with a 7-day cooldown and grouped dev dependencies)
+  and GitHub Actions (grouped).
+- The Node version is pinned in `.nvmrc`, shared by CI and local development (nvm, fnm, mise and
+  `actions/setup-node` all read it). `engines` in `package.json` states the minimum, and `.npmrc`
+  enforces it (`engine-strict=true`) along with exact dependency versions (`save-exact=true`).
+  `.editorconfig` aligns editor basics across IDEs.
 
 ## Commits
 
