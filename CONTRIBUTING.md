@@ -26,6 +26,7 @@ Messages follow [Conventional Commits](https://www.conventionalcommits.org/) and
 - **Body**: only when the summary is not enough (the why, a side effect). A few lines at most.
 - **No `Co-authored-by`** or any other attribution line.
 - One commit = one coherent change. Keep refactors apart from fixes and features.
+- Pull request titles follow the same format and are checked in CI.
 
 ### Types
 
