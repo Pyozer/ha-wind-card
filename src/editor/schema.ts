@@ -136,15 +136,15 @@ export class EditorSchema {
 export function fieldLabel(t: Translate, name: string): string {
   if (!name) return '';
   const key = `editor.field.${name}` as LocalizeKey;
-  const text = t(key);
-  return text === key ? name : text;
+  const label = t(key);
+  return label === key ? name : label;
 }
 
 /** Help text under a field: `editor.helper.<name>`, empty when there is none. */
 export function fieldHelper(t: Translate, name: string): string {
   const key = `editor.helper.${name}` as LocalizeKey;
-  const text = t(key);
-  return text === key ? '' : text;
+  const helper = t(key);
+  return helper === key ? '' : helper;
 }
 
 /** Every field of the form, for the tests that check they are all labelled. */
