@@ -5,6 +5,10 @@ name: Demo
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/**'
+      - 'test/**'
   workflow_dispatch:
 
 permissions:
@@ -12,27 +16,34 @@ permissions:
   pages: write
   id-token: write
 
+# A newer run waits for the deployment in progress instead of cancelling it half-way.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run build:demo
       - uses: actions/configure-pages@v5
+      # The attempt number is in the artifact name: a re-run of the job would otherwise add a second
+      # "github-pages" artifact to the same run, and deploy-pages refuses to pick one.
       - uses: actions/upload-pages-artifact@v4
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: dist-demo
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
