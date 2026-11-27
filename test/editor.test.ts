@@ -89,6 +89,9 @@ describe('form data', () => {
     const config: LiveWindCardConfig = { ...CONFIG, name: 'Wind', speed_entity: 'sensor.wind' };
     const out = fromFormData({ ...toFormData(config), name: '', speed_entity: undefined }, config);
     expect(out).toEqual(CONFIG);
+    // An emptied default field reverts to its default instead of writing an empty value.
+    const cleared = fromFormData({ ...toFormData(CONFIG), unit: '', max_speed: null }, CONFIG);
+    expect(cleared).toEqual(CONFIG);
   });
 
   it('keeps the actions, and the options the form does not know', () => {
@@ -189,6 +192,7 @@ describe('editor schema', () => {
       ) ?? []
     ).length;
     expect(attribute).toBe(3);
+    expect(schemaFields([{ type: 'constant', name: '' }, { name: 'unit' }])).toEqual(['unit']);
   });
 });
 

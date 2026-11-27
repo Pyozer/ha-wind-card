@@ -48,6 +48,15 @@ describe('monotonePath', () => {
       expect(y).toBeLessThanOrEqual(100.001);
     }
   });
+
+  it('copes with coincident x coordinates without NaN', () => {
+    const path = monotonePath([
+      [10, 5],
+      [10, 15],
+      [20, 10],
+    ]);
+    expect(path).not.toMatch(/NaN/);
+  });
 });
 
 describe('runsOf', () => {
@@ -139,7 +148,17 @@ describe('buildChart', () => {
     expect(m.indexAt(m.plotWidth / 2)).toBe(18);
     expect(m.indexAt(m.plotWidth)).toBe(36);
     expect(m.indexAt(5000)).toBe(36);
-    expect(buildChart(input(series([]))).indexAt(10)).toBe(0);
+    const empty = buildChart(input(series([])));
+    expect(empty.x(0)).toBe(0);
+    expect(empty.indexAt(10)).toBe(0);
+    expect(buildChart(input(series(values), { width: 20 })).indexAt(10)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('anchors the first label at the start when the arrow count is odd', () => {
+    // width 260 -> plotWidth 230 -> floor(230 / 46) = 5 arrows -> k = 0 is labelled.
+    const m = buildChart(input(series(values), { width: 260 }));
+    expect(m.labels[0].anchor).toBe('start');
+    expect(m.labels.at(-1)!.anchor).toBe('end');
   });
 });
 

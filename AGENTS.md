@@ -96,15 +96,15 @@ Design rules:
 
 Every change or new feature must be **testable and tested**:
 
-- Add or extend tests in `test/` (`*.test.ts`), one file per module: `wind`, `reading`, `history`,
-  `chart`, `rose`, `streaks`, `config`, `entities`, `view`, `localize`, `editor`, `release-notes`. Create a
-  new file when a new module appears.
+- Add or extend tests in `test/` (`*.test.ts`), one file per module: `actions`, `wind`, `reading`,
+  `history`, `chart`, `rose`, `streaks`, `streak-canvas`, `config`, `entities`, `view`, `localize`,
+  `editor`, `release-notes`. Create a new file when a new module appears.
 - Design for testing: extract logic into an exported pure function instead of leaving it in the
   component.
 - A bug fix starts with a test that reproduces the bug.
 - Coverage has floors (`vite.config.ts`): a global one, and a higher one for the pure modules. Raise
   them when coverage improves; never lower them to make a change pass. The DOM code
-  (`live-wind-card.ts`, `StreakCanvas`, `editor.ts`) is not unit tested, which is one more reason to
+  (`live-wind-card.ts`, `editor.ts`) is not unit tested, which is one more reason to
   keep it thin.
 - Key invariants have tests: no `NaN` in the paths whatever the data, a speed that is always
   converted to km/h, the history cut where data is missing, every field and option labelled in

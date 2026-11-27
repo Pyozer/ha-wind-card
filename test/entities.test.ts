@@ -85,6 +85,11 @@ describe('guessConfig', () => {
     });
   });
 
+  it('does not duplicate a sole gust sensor as both speed and gust', () => {
+    const h = hass(entity('sensor.station_gust', '1', { unit_of_measurement: 'km/h' }));
+    expect(guessConfig(h)).toEqual({ speed_entity: 'sensor.station_gust' });
+  });
+
   it('suggests nothing when there is no wind at all', () => {
     expect(guessConfig(hass(entity('sensor.t', '1', { unit_of_measurement: '°C' })))).toEqual({});
     expect(guessConfig(undefined)).toEqual({});

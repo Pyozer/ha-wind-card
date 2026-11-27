@@ -31,9 +31,10 @@ describe('toTimeline', () => {
     const timeline = toTimeline([
       { s: 'b', lu: at(10) },
       { state: 'a', last_updated: '2026-10-25T00:00:00Z' },
+      { lu: at(20) },
       { s: 'no time' },
     ]);
-    expect(timeline.map((e) => e.state)).toEqual(['a', 'b']);
+    expect(timeline.map((e) => e.state)).toEqual(['a', 'b', '']);
     expect(toTimeline(undefined)).toEqual([]);
   });
 });
@@ -102,10 +103,17 @@ describe('buildSeries', () => {
     expect(points[1].d).toBe(100);
   });
 
-  it('gives empty points without any history', () => {
+  it('gives empty points without any history or direction source', () => {
     const points = buildSeries(undefined, sensors, { start: START, end: START + 2 * STEP_MS });
     expect(points).toHaveLength(3);
     expect(points.every((p) => p.s === null && p.g === null && p.d === null)).toBe(true);
+
+    const speedOnly = resolveSources({ type: 'x', speed_entity: 'sensor.wind' });
+    const [pt] = buildSeries({ 'sensor.wind': [{ s: '15', lu: at(0) }] }, speedOnly, {
+      start: START,
+      end: START,
+    });
+    expect(pt).toMatchObject({ s: 15, g: null, d: null });
   });
 });
 
@@ -190,6 +198,8 @@ describe('liveUnits', () => {
       'sensor.gust': { entity_id: 'sensor.gust', state: '1', attributes: {} },
     };
     expect(liveUnits(states, sensors)).toEqual({ speed: 'm/s', gust: undefined });
+    const speedOnly = resolveSources({ type: 'x', speed_entity: 'sensor.wind' });
+    expect(liveUnits(states, speedOnly)).toEqual({ speed: 'm/s', gust: undefined });
   });
 });
 

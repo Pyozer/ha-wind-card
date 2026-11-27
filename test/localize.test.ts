@@ -54,6 +54,7 @@ describe('localize', () => {
     expect(localize('de', 'card.gust')).toBe('Gusts');
     expect(localize(undefined, 'card.gust')).toBe('Gusts');
     expect(localize('en', 'no.such.key' as never)).toBe('no.such.key');
+    expect(localize('en', 'card' as never)).toBe('card');
   });
 
   it('fills the placeholders', () => {

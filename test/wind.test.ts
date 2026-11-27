@@ -191,6 +191,7 @@ describe('age', () => {
     expect(formatAge(5 * 60_000, 'fr')).toMatch(/5\smin/);
     expect(formatAge(3 * 86_400_000, 'en')).toMatch(/3 days/);
     expect(formatAge(-5000, 'en')).toBe('now');
+    expect(formatAge(5 * 60_000, 'not a language')).toBe('5 minute');
   });
 });
 

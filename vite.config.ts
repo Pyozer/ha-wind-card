@@ -34,15 +34,16 @@ export default defineConfig(({ mode }) => ({
       // Floors just under the current values, so coverage cannot silently drop. The pure modules
       // (maths, reading, history, chart, editor logic) are held to a higher bar than the DOM code.
       thresholds: {
-        statements: 50,
-        branches: 45,
-        functions: 50,
-        lines: 50,
-        'src/{wind,reading,history,chart,streaks,config,entities,view}.ts': {
-          lines: 85,
-          functions: 85,
+        statements: 70,
+        branches: 67,
+        functions: 67,
+        lines: 69,
+        'src/{actions,chart,config,entities,history,reading,rose,streak-canvas,streaks,view,wind}.ts': {
+          lines: 98,
+          functions: 98,
         },
-        'src/editor/{form,schema,validation}.ts': { lines: 85, functions: 85 },
+        'src/editor/{form,schema,validation}.ts': { lines: 98, functions: 98 },
+        'src/localize/localize.ts': { lines: 98, functions: 98 },
       },
     },
   },
